@@ -24,30 +24,32 @@ def _post_json(url, payload):
         return response.status, json.loads(response.read().decode("utf-8"))
 
 
-def test_api_plan_returns_clarification_and_escape_room_plan():
+def test_api_plan_returns_senior_plan():
     server, base_url = _start_test_server()
     try:
-        status, payload = _post_json(base_url + "/api/plan", {"user_text": "我们几个朋友出去玩，5个人，有男有女，想去密室。"})
+        status, payload = _post_json(base_url + "/api/plan", {"user_text": "我想带爸妈下午轻松逛逛，不想爬楼梯，最好有地方坐，晚上吃点清淡的。"})
     finally:
         server.shutdown()
         server.server_close()
 
     assert status == 200
     result = payload["result"]
-    assert result["clarification_needed"] is True
-    assert "请补充男女各有几个人？" in result["clarification_questions"]
-    assert "澳门悬疑密室体验馆" in [step["name"] for step in result["best_plan"]["timeline"]]
+    assert result["goal"]["scenario"] == "senior"
+    assert result["best_plan"]["id"] == "senior_main"
+    assert "长者" in result["best_plan"]["title"] or "银龄" in result["best_plan"]["title"]
+    assert "senior_friendly" in result["best_plan"]["tags"]
+    assert "澳门悬疑密室体验馆" not in [step["name"] for step in result["best_plan"]["timeline"]]
 
 
-def test_api_execute_can_run_selected_alternative_plan():
+def test_api_execute_can_run_selected_senior_alternative_plan():
     server, base_url = _start_test_server()
     try:
-        _, plan_payload = _post_json(base_url + "/api/plan", {"user_text": "今天下午2男3女想玩密室，顺便吃饭。"})
+        _, plan_payload = _post_json(base_url + "/api/plan", {"user_text": "下午带爷爷奶奶在澳门走走，路不要太长，中途最好有厕所和座椅。"})
         result = plan_payload["result"]
         alternative_id = result["alternatives"][0]["id"]
         status, payload = _post_json(
             base_url + "/api/execute",
-            {"user_text": "今天下午2男3女想玩密室，顺便吃饭。", "plan_id": alternative_id, "plan_result": result},
+            {"user_text": "下午带爷爷奶奶在澳门走走，路不要太长，中途最好有厕所和座椅。", "plan_id": alternative_id, "plan_result": result},
         )
     finally:
         server.shutdown()

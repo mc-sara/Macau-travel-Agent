@@ -12,34 +12,15 @@ from agent.llm_goal_parser import load_llm_config, redact_config
 
 CASES: List[Dict[str, Any]] = [
     {
-        "id": "friends_group",
+        "id": "generic_group_senior_safe",
         "text": "今天下午2男3女出去玩，安排一下。",
         "expect": {
-            "relationship_type": "friends",
+            "relationship_type": "general",
             "people.total": 5,
             "people.male": 2,
             "people.female": 3,
             "planning_strategy.restaurant_table_size_required": 5,
-        },
-    },
-    {
-        "id": "couple_date",
-        "text": "今天下午想和对象约会，浪漫一点但别太累。",
-        "expect": {
-            "relationship_type": "couple",
-            "outing_intent": "date_plan",
-            "people.total": 2,
-            "soft_preferences contains": "romantic",
-        },
-    },
-    {
-        "id": "family_child",
-        "text": "带5岁孩子玩几个小时，老婆想吃低卡一点。",
-        "expect": {
-            "relationship_type": "family_with_children",
-            "people.children": 1,
-            "hard_constraints contains": "kid_friendly",
-            "soft_preferences contains": "low_calorie_food",
+            "hard_constraints contains": "senior_friendly",
         },
     },
     {
@@ -47,8 +28,28 @@ CASES: List[Dict[str, Any]] = [
         "text": "我爸妈来澳门，想带他们轻松逛逛，不要爬楼梯。",
         "expect": {
             "relationship_type": "family_with_seniors",
+            "outing_intent": "low_fatigue_relax",
             "people.seniors": 2,
             "hard_constraints contains": "avoid_stairs",
+        },
+    },
+    {
+        "id": "restroom_and_rest",
+        "text": "下午带爷爷奶奶在澳门走走，路不要太长，中途最好有厕所和座椅。",
+        "expect": {
+            "relationship_type": "family_with_seniors",
+            "hard_constraints contains": "short_walking_distance",
+            "soft_preferences contains": "toilet_access",
+            "soft_preferences contains": "rest_area",
+        },
+    },
+    {
+        "id": "wheelchair_elevator",
+        "text": "外婆走路慢，最好全程有电梯或无障碍通道。",
+        "expect": {
+            "relationship_type": "family_with_seniors",
+            "hard_constraints contains": "wheelchair_friendly",
+            "hard_constraints contains": "elevator_required",
         },
     },
     {
@@ -99,13 +100,7 @@ def run_cases(client: Optional[Any] = None, llm_mode: str = "real") -> List[Dict
     for case in CASES:
         goal = parse_structured_goal(case["text"], llm_mode=llm_mode, client=client)
         passed, failures = evaluate_goal(goal, case["expect"])
-        results.append({
-            "id": case["id"],
-            "text": case["text"],
-            "passed": passed,
-            "failures": failures,
-            "goal": goal,
-        })
+        results.append({"id": case["id"], "text": case["text"], "passed": passed, "failures": failures, "goal": goal})
     return results
 
 
@@ -117,12 +112,7 @@ def main() -> int:
         status = "PASS" if result["passed"] else "FAIL"
         print(f"[{status}] {result['id']}")
         goal = result["goal"]
-        print(
-            "  normalized:",
-            f"relationship_type={goal.get('relationship_type')}",
-            f"outing_intent={goal.get('outing_intent')}",
-            f"people={goal.get('people')}",
-        )
+        print("  normalized:", f"relationship_type={goal.get('relationship_type')}", f"outing_intent={goal.get('outing_intent')}", f"people={goal.get('people')}")
         debug = goal.get("_debug", {})
         if debug:
             print("  debug:", {k: debug.get(k) for k in ["llm_mode", "llm_provider", "llm_fallback_used", "normalization_steps"]})

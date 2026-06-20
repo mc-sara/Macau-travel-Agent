@@ -20,15 +20,11 @@ CHINESE_NUMBERS = {
 }
 
 RELATIONSHIP_TO_SCENARIO = {
-    "family_with_children": "family",
-    "family_with_seniors": "family",
-    "couple": "couple",
-    "friends": "friends",
-    "classmates": "friends",
-    "mixed_group": "friends",
-    "business": "friends",
-    "solo": "general",
-    "general": "general",
+    "family_with_seniors": "senior",
+    "caregiver_with_seniors": "senior",
+    "senior_couple": "senior",
+    "solo_senior": "senior",
+    "general": "senior",
 }
 
 
@@ -77,42 +73,31 @@ def parse_structured_goal(
     client: Optional[Any] = None,
     llm_mode: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Parse user text into the new structured goal format."""
+    """Parse user text into the structured senior-friendly goal format."""
     mode = llm_mode or ("real" if use_llm else "mock")
     return parse_goal_with_llm(user_text, use_mock=(mode == "mock"), client=client, llm_mode=mode)
 
 
 def adapt_structured_goal_to_legacy_goal(structured_goal: Dict[str, Any]) -> Dict[str, Any]:
-    """Adapt structured goal to the existing planner-compatible goal format."""
+    """Adapt structured goal to the existing planner-compatible goal format.
+
+    The legacy planner still expects a flat `scenario` field. For this cleanup
+    pass, every valid relationship routes into `senior` so later planner/scorer
+    cleanup can remove the remaining family/friends/couple branches safely.
+    """
     relationship = structured_goal.get("relationship_type", "general")
-    scenario = RELATIONSHIP_TO_SCENARIO.get(relationship, "general")
+    scenario = RELATIONSHIP_TO_SCENARIO.get(relationship, "senior")
     people = dict(structured_goal.get("people", {}))
     duration_hours = structured_goal.get("time", {}).get("duration_hours", 5)
     preferences = list(structured_goal.get("hard_constraints", [])) + list(structured_goal.get("soft_preferences", []))
 
-    if scenario == "family" and relationship == "family_with_children":
-        people.setdefault("adults", max(1, people.get("total", 3) - people.get("children", 1)))
-        people.setdefault("child_age", 5)
-        if "kid_friendly" not in preferences:
-            preferences.append("kid_friendly")
-        if "low_calorie_food" in preferences and "low_calorie" not in preferences:
-            preferences.append("low_calorie")
-    elif scenario == "family" and relationship == "family_with_seniors":
-        people.setdefault("adults", max(1, people.get("total", 3) - people.get("seniors", 2)))
-        if "senior_friendly" not in preferences:
-            preferences.append("senior_friendly")
-    elif scenario == "couple":
-        people["total"] = 2
-        if "romantic" not in preferences:
-            preferences.append("romantic")
-        if "low_fatigue" not in preferences:
-            preferences.append("low_fatigue")
-    elif scenario == "friends":
-        people.setdefault("total", 4)
-        if "social" not in preferences:
-            preferences.append("social")
-        if "photo_friendly" not in preferences:
-            preferences.append("photo_friendly")
+    people.setdefault("total", 2)
+    people.setdefault("seniors", 0)
+    people.setdefault("adults", max(0, people.get("total", 2) - people.get("seniors", 0)))
+
+    for item in ["senior_friendly", "low_fatigue", "avoid_stairs", "short_walking_distance", "rest_area", "toilet_access"]:
+        if item not in preferences:
+            preferences.append(item)
 
     return {
         "raw_text": structured_goal.get("raw_text", ""),
@@ -126,6 +111,6 @@ def adapt_structured_goal_to_legacy_goal(structured_goal: Dict[str, Any]) -> Dic
 
 
 def parse_goal(user_text: str, use_llm: bool = False, llm_mode: Optional[str] = None) -> Dict[str, Any]:
-    """Parse a Chinese natural-language local-life request into planner-compatible goal."""
+    """Parse a Chinese natural-language senior local-life request into planner-compatible goal."""
     structured_goal = parse_structured_goal(user_text, use_llm=use_llm, llm_mode=llm_mode)
     return adapt_structured_goal_to_legacy_goal(structured_goal)

@@ -1,15 +1,9 @@
 from agent.parser import parse_goal
-from agent.tools import (
-    check_availability,
-    get_accessibility,
-    mock_map_route_api,
-    search_attractions,
-    search_local_merchants,
-)
+from agent.tools import check_availability, get_accessibility, mock_map_route_api, search_attractions, search_local_merchants
 
 
-def test_search_attractions_returns_family_candidates():
-    goal = parse_goal('今天下午想和老婆孩子出去玩几个小时，别离家太远。')
+def test_search_attractions_returns_senior_candidates():
+    goal = parse_goal('我想带爸妈下午轻松逛逛，不想爬楼梯。')
     attractions = search_attractions(goal)
     names = [item['name'] for item in attractions]
     assert '二龙喉公园缆车' in names
@@ -31,11 +25,12 @@ def test_mock_map_route_api_returns_navigation_fields():
     assert 'route_summary' in route
 
 
-def test_search_local_merchants_filters_by_scenario():
-    goal = parse_goal('今天下午和朋友4个人出去玩，2男2女，安排一下。')
+def test_search_local_merchants_returns_senior_safe_merchants():
+    goal = parse_goal('今天下午带爸妈出去轻松逛逛，晚上吃清淡一点。')
     merchants = search_local_merchants(goal)
-    assert merchants['restaurants'][0]['name'] == '氹仔葡式小馆'
-    assert merchants['friend_activities']
+    assert merchants['restaurants'][0]['name'] == '轻悦生活餐厅'
+    assert merchants['friend_activities'] == []
+    assert merchants['couple_activities'] == []
     assert merchants['drink_shops']
 
 

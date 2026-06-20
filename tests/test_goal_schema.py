@@ -39,8 +39,12 @@ def test_default_goal_uses_allowed_enums_and_safe_defaults():
     assert goal['budget']['level'] == 'medium'
 
 
-def test_preference_enum_contains_demo_constraints():
+def test_preference_enum_contains_senior_constraints():
     assert 'low_fatigue' in HARD_SOFT_PREFERENCE_ENUM
-    assert 'photo_friendly' in HARD_SOFT_PREFERENCE_ENUM
+    assert 'short_walking_distance' in HARD_SOFT_PREFERENCE_ENUM
     assert 'avoid_stairs' in HARD_SOFT_PREFERENCE_ENUM
-    assert 'dinner_together' in HARD_SOFT_PREFERENCE_ENUM
+    assert 'senior_friendly' in HARD_SOFT_PREFERENCE_ENUM
+    assert 'rest_area' in HARD_SOFT_PREFERENCE_ENUM
+    assert 'toilet_access' in HARD_SOFT_PREFERENCE_ENUM
+    assert 'wheelchair_friendly' in HARD_SOFT_PREFERENCE_ENUM
+    assert 'elevator_required' in HARD_SOFT_PREFERENCE_ENUM

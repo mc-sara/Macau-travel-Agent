@@ -98,6 +98,8 @@ ROUTES: Dict[tuple, Dict[str, Any]] = {
 
 def search_attractions(goal: Dict[str, Any]) -> List[Dict[str, Any]]:
     scenario = goal.get("scenario")
+    if scenario == "senior":
+        return [item for item in ATTRACTIONS if item["id"] in {"attraction_senado_square", "attraction_guia_cable_car", "attraction_macau_tower", "attraction_ruins_st_paul"}]
     if scenario == "family":
         return [item for item in ATTRACTIONS if "family" in item["tags"] or item["id"] == "attraction_ruins_st_paul"]
     if scenario == "friends":
@@ -121,6 +123,17 @@ def mock_map_route_api(origin: str, destination: str, mode: str = "taxi") -> Dic
 def search_local_merchants(goal: Dict[str, Any]) -> Dict[str, List[Dict[str, Any]]]:
     merchants = load_merchants()
     scenario = goal.get("scenario")
+    if scenario == "senior":
+        restaurants = [item for item in merchants["restaurants"] if "family" in item.get("scenario_tags", []) or item.get("id") == "res_001"]
+        return {
+            "senior_activities": [],
+            "family_activities": [],
+            "friend_activities": [],
+            "couple_activities": [],
+            "restaurants": restaurants,
+            "drink_shops": merchants["drink_shops"],
+            "gift_shops": [],
+        }
     restaurants = [item for item in merchants["restaurants"] if scenario in item.get("scenario_tags", [])]
     return {
         "family_activities": merchants["family_activities"] if scenario == "family" else [],

@@ -1,7 +1,7 @@
 from agent.llm_goal_parser import normalize_llm_goal_payload
 
 
-def test_normalize_real_api_parsed_request_payload_to_structured_goal():
+def test_normalize_real_api_parsed_request_payload_to_senior_safe_goal():
     raw = {
         'original_input': '今天下午2男3女出去玩，安排一下。',
         'relationship_type': 'general',
@@ -16,32 +16,20 @@ def test_normalize_real_api_parsed_request_payload_to_structured_goal():
             'outing_intent': 'general_outing',
         },
     }
-
     normalized = normalize_llm_goal_payload(raw, '今天下午2男3女出去玩，安排一下。')
-
-    assert normalized['relationship_type'] == 'friends'
-    assert normalized['outing_intent'] == 'half_day_outing'
+    assert normalized['relationship_type'] == 'general'
+    assert normalized['outing_intent'] == 'general_outing'
     assert normalized['people']['total'] == 5
     assert normalized['people']['male'] == 2
     assert normalized['people']['female'] == 3
     assert normalized['planning_strategy']['restaurant_table_size_required'] == 5
-    assert 'social' in normalized['soft_preferences']
+    assert 'senior_friendly' in normalized['hard_constraints']
+    assert 'social' not in normalized['soft_preferences']
 
 
 def test_normalize_real_api_uses_nested_constraints_and_missing_info():
-    raw = {
-        'parsed_request': {
-            'party_size': 3,
-            'relationship_type': 'family_with_seniors',
-            'outing_intent': 'low_fatigue_relax',
-            'constraints': ['avoid_stairs', 'low_fatigue'],
-            'preferences': ['local_specialty'],
-            'missing_info': ['budget'],
-        }
-    }
-
+    raw = {'parsed_request': {'party_size': 3, 'relationship_type': 'family_with_seniors', 'outing_intent': 'low_fatigue_relax', 'constraints': ['avoid_stairs', 'low_fatigue'], 'preferences': ['local_specialty'], 'missing_info': ['budget']}}
     normalized = normalize_llm_goal_payload(raw, '我爸妈来澳门，想带他们轻松逛逛，不要爬楼梯。')
-
     assert normalized['relationship_type'] == 'family_with_seniors'
     assert normalized['people']['total'] == 3
     assert 'avoid_stairs' in normalized['hard_constraints']

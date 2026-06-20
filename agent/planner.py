@@ -16,6 +16,8 @@ def _routes_for_timeline(timeline: List[Dict[str, Any]], origin: str) -> List[Di
 
 def build_timeline(scenario: str, goal: Dict[str, Any] = None) -> List[Dict[str, Any]]:
     goal = goal or {}
+    if scenario == "senior":
+        return _timeline(["议事亭前地", "茶语澳门低糖奶茶", "轻悦生活餐厅"])
     if scenario == "family":
         return _timeline(["二龙喉公园缆车", "澳门小熊亲子乐园", "轻悦生活餐厅", "茶语澳门低糖奶茶"])
     if scenario == "friends" and "escape_room" in goal.get("preferences", []):
@@ -29,6 +31,8 @@ def build_timeline(scenario: str, goal: Dict[str, Any] = None) -> List[Dict[str,
 
 def _availability_for_scenario(scenario: str, people_count: int, goal: Dict[str, Any] = None) -> List[Dict[str, Any]]:
     goal = goal or {}
+    if scenario == "senior":
+        return [check_availability("res_001", "17:30", people_count), check_availability("drink_001", "16:30", people_count)]
     if scenario == "family":
         return [check_availability("kid_001", "16:00", people_count), check_availability("res_001", "17:30", people_count), check_availability("drink_001", "17:30", people_count)]
     if scenario == "friends":
@@ -43,12 +47,14 @@ def _main_plan(goal: Dict[str, Any]) -> Dict[str, Any]:
     timeline = build_timeline(scenario, goal)
     people_count = goal.get("people", {}).get("total", 2)
     titles = {
+        "senior": "长者低疲劳半日路线",
         "family": "亲子低疲劳半日路线",
         "friends": "朋友拍照聊天半日路线",
         "couple": "情侣浪漫低疲劳约会路线",
         "general": "澳门轻松半日路线",
     }
     tags = {
+        "senior": ["senior_friendly", "low_fatigue", "short_walking_distance", "avoid_stairs", "rest_area", "toilet_access"],
         "family": ["kid_friendly", "low_fatigue", "low_calorie"],
         "friends": ["social", "photo_friendly", "chat_friendly"] + (["escape_room", "indoor_activity"] if "escape_room" in goal.get("preferences", []) else []),
         "couple": ["romantic", "low_fatigue", "photo_friendly", "surprise"],
@@ -62,7 +68,7 @@ def _main_plan(goal: Dict[str, Any]) -> Dict[str, Any]:
         "routes": _routes_for_timeline(timeline, goal.get("origin", "家")),
         "availability": _availability_for_scenario(scenario, people_count, goal),
         "tags": tags.get(scenario, tags["general"]),
-        "budget": {"currency": "MOP", "estimated_total": {"family": 650, "friends": 920, "couple": 1180}.get(scenario, 600)},
+        "budget": {"currency": "MOP", "estimated_total": {"senior": 520, "family": 650, "friends": 920, "couple": 1180}.get(scenario, 600)},
     }
     plan["score"] = score_plan(plan, goal)
     return plan
@@ -71,6 +77,7 @@ def _main_plan(goal: Dict[str, Any]) -> Dict[str, Any]:
 def _alternative_plan(goal: Dict[str, Any]) -> Dict[str, Any]:
     scenario = goal.get("scenario", "general")
     alternatives = {
+        "senior": ["议事亭前地", "轻悦生活餐厅"],
         "family": ["二龙喉公园缆车", "澳门动物互动体验馆", "轻悦生活餐厅"],
         "friends": ["议事亭前地", "茶语澳门低糖奶茶", "氹仔轻松桌游馆", "氹仔葡式小馆"],
         "couple": ["澳门旅游塔", "海风咖啡", "澳门甜心蛋糕", "塔景氛围餐厅"],

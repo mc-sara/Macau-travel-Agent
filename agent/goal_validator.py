@@ -4,6 +4,9 @@ from typing import Any, Dict, List
 from agent.goal_schema import HARD_SOFT_PREFERENCE_ENUM, OUTING_INTENT_ENUM, RELATIONSHIP_TYPE_ENUM, default_goal
 
 
+SENIOR_KEYWORDS = ("爸妈", "父母", "妈妈", "爸爸", "爷爷", "奶奶", "外公", "外婆", "长者", "老人", "长辈", "银龄")
+
+
 def _unique(items: List[str]) -> List[str]:
     result: List[str] = []
     for item in items:
@@ -62,27 +65,37 @@ def validate_and_normalize_goal(goal: Dict[str, Any]) -> Dict[str, Any]:
         merged["confidence"] = max(0.0, min(1.0, _safe_float(merged.get("confidence"), 0.6)))
     else:
         merged["confidence"] = 0.6
+
     merged["people"] = _normalize_people(merged.get("people", {}))
     merged["hard_constraints"] = _unique(list(merged.get("hard_constraints", [])))
     merged["soft_preferences"] = _unique(list(merged.get("soft_preferences", [])))
 
+    raw_text = merged.get("raw_text", "")
     people = merged["people"]
-    if people["children"] > 0:
-        merged["relationship_type"] = "family_with_children"
-        merged["outing_intent"] = "kid_friendly_play"
-        merged["hard_constraints"] = _unique(merged["hard_constraints"] + ["kid_friendly", "low_fatigue", "short_walking_distance"])
-    elif people["seniors"] > 0:
+    if people["seniors"] > 0 or any(keyword in raw_text for keyword in SENIOR_KEYWORDS):
+        if people["seniors"] <= 0:
+            people["seniors"] = 2 if any(keyword in raw_text for keyword in ("爸妈", "父母", "爷爷奶奶")) else 1
+            people["total"] = max(people["total"], people["seniors"] + 1)
         merged["relationship_type"] = "family_with_seniors"
         merged["outing_intent"] = "low_fatigue_relax"
-        merged["hard_constraints"] = _unique(merged["hard_constraints"] + ["senior_friendly", "avoid_stairs", "low_fatigue"])
-    elif merged["relationship_type"] == "couple" and people["total"] > 2:
-        merged["relationship_type"] = "friends"
-        merged["outing_intent"] = "half_day_outing"
-        merged["soft_preferences"] = _unique(merged["soft_preferences"] + ["social", "chat_friendly"])
+    elif merged["relationship_type"] == "general":
+        # The product is senior-first; vague requests stay general but inherit senior-safe constraints.
+        merged["outing_intent"] = merged.get("outing_intent") or "general_outing"
 
-    if merged["relationship_type"] == "friends" and "social" not in merged["soft_preferences"]:
-        merged["soft_preferences"] = _unique(merged["soft_preferences"] + ["social", "photo_friendly", "dinner_together"])
-    if merged["relationship_type"] == "couple":
-        merged["soft_preferences"] = _unique(merged["soft_preferences"] + ["romantic", "surprise_action"])
+    merged["hard_constraints"] = _unique(
+        merged["hard_constraints"] + ["senior_friendly", "low_fatigue", "short_walking_distance"]
+    )
+    if "不要爬楼梯" in raw_text or "不爬楼梯" in raw_text or "楼梯" in raw_text:
+        merged["hard_constraints"] = _unique(merged["hard_constraints"] + ["avoid_stairs"])
+    if "轮椅" in raw_text or "无障碍" in raw_text:
+        merged["hard_constraints"] = _unique(merged["hard_constraints"] + ["wheelchair_friendly"])
+    if "电梯" in raw_text:
+        merged["hard_constraints"] = _unique(merged["hard_constraints"] + ["elevator_required"])
+    if "厕所" in raw_text or "洗手间" in raw_text:
+        merged["soft_preferences"] = _unique(merged["soft_preferences"] + ["toilet_access"])
+    if "坐" in raw_text or "休息" in raw_text:
+        merged["soft_preferences"] = _unique(merged["soft_preferences"] + ["rest_area"])
+    if "清淡" in raw_text or "少油" in raw_text or "低卡" in raw_text:
+        merged["soft_preferences"] = _unique(merged["soft_preferences"] + ["low_calorie_food"])
 
     return merged

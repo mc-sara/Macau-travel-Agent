@@ -3,61 +3,53 @@ from typing import Any, Dict, List
 
 
 RELATIONSHIP_TYPE_ENUM: List[str] = [
-    "family_with_children",
     "family_with_seniors",
-    "couple",
-    "friends",
-    "solo",
-    "business",
-    "classmates",
-    "mixed_group",
+    "caregiver_with_seniors",
+    "senior_couple",
+    "solo_senior",
     "general",
 ]
 
 OUTING_INTENT_ENUM: List[str] = [
+    "low_fatigue_relax",
     "half_day_outing",
     "dinner_plan",
-    "date_plan",
-    "photo_citywalk",
-    "kid_friendly_play",
-    "low_fatigue_relax",
-    "celebration",
     "local_experience",
     "rainy_day_plan",
-    "indoor_plan",
     "general_outing",
 ]
 
 HARD_SOFT_PREFERENCE_ENUM: List[str] = [
     "low_fatigue",
     "short_walking_distance",
-    "kid_friendly",
     "senior_friendly",
     "avoid_stairs",
     "indoor_required",
-    "photo_friendly",
-    "romantic",
-    "social",
-    "chat_friendly",
-    "dinner_together",
     "low_calorie_food",
     "budget_control",
     "avoid_long_queue",
-    "surprise_action",
     "local_specialty",
-    "escape_room",
-    "indoor_activity",
+    "rest_area",
+    "toilet_access",
+    "flat_route",
+    "wheelchair_friendly",
+    "elevator_required",
+    "shaded_or_indoor",
+    "simple_transport",
+    "family_notification",
+    "route_card_needed",
+    "oral_guide_needed",
 ]
 
 DEFAULT_PLANNING_STRATEGY: Dict[str, Any] = {
-    "pace": "medium",
-    "max_walking_per_segment_m": 600,
-    "max_route_duration_per_segment_min": 25,
+    "pace": "slow",
+    "max_walking_per_segment_m": 300,
+    "max_route_duration_per_segment_min": 18,
     "must_include_meal": True,
-    "must_include_rest": False,
+    "must_include_rest": True,
     "restaurant_table_size_required": 2,
-    "avoid": [],
-    "preferred": [],
+    "avoid": ["stairs", "long_queue", "steep_slopes", "too_tiring"],
+    "preferred": ["rest_area", "senior_friendly_restaurant", "flat_route"],
 }
 
 

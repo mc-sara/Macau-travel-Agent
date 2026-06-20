@@ -3,48 +3,26 @@ from agent.planner import plan_day
 from agent.tools import search_local_merchants
 
 
-def test_parser_keeps_escape_room_preference_from_user_text():
-    goal = parse_goal("今天下午2男3女出去玩，想去密室，安排一下。")
+def test_old_entertainment_text_routes_to_senior_safe_plan():
+    goal = parse_goal("今天下午2男3女出去玩，想去室内活动，安排一下。")
+    assert goal["scenario"] == "senior"
+    assert "senior_friendly" in goal["preferences"]
+    assert "short_walking_distance" in goal["preferences"]
 
-    structured = goal["structured_goal"]
-    assert "escape_room" in structured["soft_preferences"]
-    assert "escape_room" in goal["preferences"]
 
-
-def test_search_local_merchants_returns_escape_room_for_preference():
-    goal = parse_goal("今天下午2男3女出去玩，想去密室，安排一下。")
-
+def test_search_local_merchants_returns_senior_restaurant_for_senior_plan():
+    goal = parse_goal("我想带爸妈下午轻松逛逛，晚上吃点清淡的。")
     merchants = search_local_merchants(goal)
+    assert merchants["restaurants"]
+    assert merchants["restaurants"][0]["name"] == "轻悦生活餐厅"
+    assert merchants["friend_activities"] == []
+    assert merchants["couple_activities"] == []
 
-    names = [item["name"] for item in merchants["friend_activities"]]
-    assert "澳门悬疑密室体验馆" in names
 
-
-def test_plan_day_includes_escape_room_when_requested():
-    result = plan_day("今天下午2男3女出去玩，想去密室，安排一下。")
-
+def test_plan_day_excludes_old_entertainment_activity():
+    result = plan_day("我想带爸妈下午轻松逛逛，不想爬楼梯。")
     names = [step["name"] for step in result["best_plan"]["timeline"]]
-
-    assert "澳门悬疑密室体验馆" in names
-    assert "密室" in "、".join(result["best_plan"]["score"]["reasons"])
-
-
-def test_plan_day_defaults_to_escape_room_activity_for_explicit_escape_room_goal_without_group():
-    result = plan_day("今天下午想玩密室逃脱，安排一下。")
-
-    names = [step["name"] for step in result["best_plan"]["timeline"]]
-
-    assert result["goal"]["scenario"] == "friends"
-    assert "escape_room" in result["goal"]["preferences"]
-    assert "澳门悬疑密室体验馆" in names
-    assert "密室" in "、".join(result["best_plan"]["score"]["reasons"])
-
-
-def test_plan_day_treats_script_murder_as_escape_room_related_activity():
-    result = plan_day("今天下午想玩剧本杀，安排一下。")
-
-    names = [step["name"] for step in result["best_plan"]["timeline"]]
-
-    assert result["goal"]["scenario"] == "friends"
-    assert "escape_room" in result["goal"]["preferences"]
-    assert "澳门悬疑密室体验馆" in names
+    assert result["goal"]["scenario"] == "senior"
+    assert result["best_plan"]["id"] == "senior_main"
+    assert "澳门悬疑密室体验馆" not in names
+    assert "长者" in result["best_plan"]["title"]
