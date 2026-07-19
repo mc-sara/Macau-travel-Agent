@@ -1,6 +1,7 @@
 from typing import Any, Dict, List
 
 from agent.parser import parse_goal
+from agent.recommender import recommend_itineraries
 from agent.scorer import score_plan
 from agent.tools import check_availability, get_accessibility, mock_map_route_api, search_attractions, search_local_merchants
 
@@ -17,28 +18,28 @@ def _routes_for_timeline(timeline: List[Dict[str, Any]], origin: str) -> List[Di
 def build_timeline(scenario: str, goal: Dict[str, Any] = None) -> List[Dict[str, Any]]:
     goal = goal or {}
     if scenario == "senior":
-        return _timeline(["议事亭前地", "茶语澳门低糖奶茶", "轻悦生活餐厅"])
+        return _timeline(["澳门仁慈堂大楼", "澳门中央图书馆", "澳门文化中心"])
     if scenario == "family":
-        return _timeline(["二龙喉公园缆车", "澳门小熊亲子乐园", "轻悦生活餐厅", "茶语澳门低糖奶茶"])
+        return _timeline(["二龙喉公园", "白鸽巢公园", "澳门中央图书馆"])
     if scenario == "friends" and "escape_room" in goal.get("preferences", []):
-        return _timeline(["议事亭前地", "茶语澳门低糖奶茶", "澳门悬疑密室体验馆", "氹仔葡式小馆"])
+        return _timeline(["澳门仁慈堂大楼", "玫瑰圣母堂（板樟堂）", "澳门文化中心"])
     if scenario == "friends":
-        return _timeline(["议事亭前地", "玫瑰圣母堂", "茶语澳门低糖奶茶", "澳门城市展览空间", "氹仔葡式小馆"])
+        return _timeline(["澳门仁慈堂大楼", "玫瑰圣母堂（板樟堂）", "澳门文化中心", "澳门渔人码头"])
     if scenario == "couple":
-        return _timeline(["澳门旅游塔", "海风咖啡", "塔景氛围餐厅", "小岛花房"])
-    return _timeline(["议事亭前地", "茶语澳门低糖奶茶", "轻悦生活餐厅"])
+        return _timeline(["澳门文化中心", "澳门渔人码头", "观音莲花苑"])
+    return _timeline(["澳门仁慈堂大楼", "澳门中央图书馆", "澳门文化中心"])
 
 
 def _availability_for_scenario(scenario: str, people_count: int, goal: Dict[str, Any] = None) -> List[Dict[str, Any]]:
     goal = goal or {}
     if scenario == "senior":
-        return [check_availability("res_001", "17:30", people_count), check_availability("drink_001", "16:30", people_count)]
+        return [check_availability("attraction_501", "14:00", people_count), check_availability("attraction_505", "15:00", people_count), check_availability("attraction_502", "16:20", people_count)]
     if scenario == "family":
-        return [check_availability("kid_001", "16:00", people_count), check_availability("res_001", "17:30", people_count), check_availability("drink_001", "17:30", people_count)]
+        return [check_availability("attraction_628", "14:00", people_count), check_availability("attraction_510", "15:00", people_count), check_availability("attraction_505", "16:20", people_count)]
     if scenario == "friends":
-        return [check_availability("act_003" if "escape_room" in goal.get("preferences", []) else "act_001", "16:30", people_count), check_availability("res_002", "18:00", people_count), check_availability("drink_001", "17:00", people_count)]
+        return [check_availability("attraction_501", "14:00", people_count), check_availability("attraction_575", "15:00", people_count), check_availability("attraction_502", "16:20", people_count)]
     if scenario == "couple":
-        return [check_availability("couple_001", "16:00", people_count), check_availability("res_003", "18:30", people_count), check_availability("gift_001", "18:30", people_count)]
+        return [check_availability("attraction_502", "14:00", people_count), check_availability("attraction_504", "15:00", people_count), check_availability("attraction_535", "16:20", people_count)]
     return []
 
 
@@ -77,11 +78,11 @@ def _main_plan(goal: Dict[str, Any]) -> Dict[str, Any]:
 def _alternative_plan(goal: Dict[str, Any]) -> Dict[str, Any]:
     scenario = goal.get("scenario", "general")
     alternatives = {
-        "senior": ["议事亭前地", "轻悦生活餐厅"],
-        "family": ["二龙喉公园缆车", "澳门动物互动体验馆", "轻悦生活餐厅"],
-        "friends": ["议事亭前地", "茶语澳门低糖奶茶", "氹仔轻松桌游馆", "氹仔葡式小馆"],
-        "couple": ["澳门旅游塔", "海风咖啡", "澳门甜心蛋糕", "塔景氛围餐厅"],
-        "general": ["议事亭前地", "茶语澳门低糖奶茶"],
+        "senior": ["澳门仁慈堂大楼", "澳门中央图书馆"],
+        "family": ["二龙喉公园", "白鸽巢公园", "澳门中央图书馆"],
+        "friends": ["澳门仁慈堂大楼", "玫瑰圣母堂（板樟堂）", "澳门渔人码头"],
+        "couple": ["澳门文化中心", "澳门渔人码头", "观音莲花苑"],
+        "general": ["澳门仁慈堂大楼", "澳门中央图书馆"],
     }
     timeline = _timeline(alternatives.get(scenario, alternatives["general"]))
     plan = {
@@ -98,8 +99,18 @@ def _alternative_plan(goal: Dict[str, Any]) -> Dict[str, Any]:
     return plan
 
 
-def generate_candidate_plans(goal: Dict[str, Any]) -> List[Dict[str, Any]]:
+def _fallback_candidate_plans(goal: Dict[str, Any]) -> List[Dict[str, Any]]:
     return [_main_plan(goal), _alternative_plan(goal)]
+
+
+def generate_candidate_plans(goal: Dict[str, Any]) -> List[Dict[str, Any]]:
+    try:
+        plans = recommend_itineraries(goal, max_plans=3)
+        if len(plans) >= 2:
+            return plans
+    except Exception:
+        pass
+    return _fallback_candidate_plans(goal)
 
 
 def _tool_steps(goal: Dict[str, Any], best_plan: Dict[str, Any]) -> List[Dict[str, Any]]:

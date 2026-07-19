@@ -1,4 +1,4 @@
-from agent.executor import build_route_card, execute_plan, order_drink_or_extra, reserve_activity, reserve_restaurant, send_plan_message
+from agent.executor import build_oral_guide, build_route_card, execute_plan, order_drink_or_extra, reserve_activity, reserve_restaurant, send_plan_message
 from agent.planner import plan_day
 
 
@@ -8,6 +8,12 @@ def test_execute_senior_plan_returns_bookings_route_card_and_message():
     assert execution['bookings']
     assert all(item['status'] == 'success' for item in execution['bookings'])
     assert execution['route_card']['large_text_ready'] is True
+    assert execution['route_card']['boarding_instruction']
+    assert execution['route_card']['dropoff_instruction']
+    assert execution['route_card']['walking_instruction']
+    assert execution['oral_guide']['mandarin']
+    assert execution['oral_guide']['cantonese']
+    assert execution['qwenpaw_actions'][0]['channel'] == 'booking'
     assert '长者路线卡' in execution['final_message']
 
 
@@ -48,3 +54,14 @@ def test_build_route_card_has_three_instruction_fields():
     assert card['boarding_instruction']
     assert card['dropoff_instruction']
     assert card['walking_instruction']
+    assert card['language'] == 'zh-CN / zh-HK'
+    assert len(card['sentences']) == 3
+    assert '电梯' in card['sentences'][2] or '平路' in card['sentences'][2]
+
+
+def test_build_oral_guide_returns_mandarin_and_cantonese_copy():
+    result = plan_day('下午带爷爷奶奶在澳门走走，路不要太长，中途最好有厕所和座椅。')
+    guide = build_oral_guide(result['best_plan'], result['goal'])
+    assert '我们现在先去' in guide['mandarin']
+    assert '我哋而家先去' in guide['cantonese']
+    assert guide['tts_config']['rate'] == '-15%'

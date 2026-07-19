@@ -7,11 +7,12 @@ from urllib.parse import unquote, urlparse
 
 from agent.executor import execute_plan
 from agent.planner import plan_day
+from agent.tts import synthesize_speech
 
 
 ROOT = Path(__file__).resolve().parent
 HOST = "127.0.0.1"
-PORT = 8765
+PORT = 8899
 
 
 def _json_response(handler: BaseHTTPRequestHandler, status: int, payload: Dict[str, Any]) -> None:
@@ -135,6 +136,24 @@ class MacauAgentHandler(BaseHTTPRequestHandler):
                     "execution": execution,
                 },
             )
+            return
+
+        if path == "/api/tts":
+            data, error = _read_json(self)
+            if error:
+                _json_response(self, 400, {"error": error})
+                return
+            text = str(data.get("text", "")).strip()
+            language = str(data.get("language", "mandarin")).strip()
+            if not text:
+                _json_response(self, 400, {"error": "text is required"})
+                return
+            try:
+                audio = synthesize_speech(text, language=language, filename_prefix="route_guide")
+            except Exception as exc:
+                _json_response(self, 500, {"error": str(exc)})
+                return
+            _json_response(self, 200, {"status": "success", "audio": audio})
             return
 
         _json_response(self, 404, {"error": "unknown api endpoint"})

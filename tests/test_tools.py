@@ -6,15 +6,16 @@ def test_search_attractions_returns_senior_candidates():
     goal = parse_goal('我想带爸妈下午轻松逛逛，不想爬楼梯。')
     attractions = search_attractions(goal)
     names = [item['name'] for item in attractions]
-    assert '二龙喉公园缆车' in names
-    assert any(item['id'] == 'attraction_guia_cable_car' for item in attractions)
+    assert '澳门文化中心' in names
+    assert any(item['id'] == 'attraction_502' for item in attractions)
+    assert all('real_excel' in item.get('tags', []) for item in attractions[:3])
 
 
-def test_get_accessibility_returns_risk_for_ruins_of_st_paul():
-    accessibility = get_accessibility('attraction_ruins_st_paul')
-    assert accessibility['stairs_count'] == 68
-    assert accessibility['steep_slopes'] is True
-    assert '68级石阶' in accessibility['senior_tips_zh']
+def test_get_accessibility_returns_real_excel_record():
+    accessibility = get_accessibility('attraction_502')
+    assert 'senior_tips_zh' in accessibility
+    assert accessibility['rest_areas']
+    assert accessibility['steep_slopes'] is False
 
 
 def test_mock_map_route_api_returns_navigation_fields():
@@ -28,10 +29,10 @@ def test_mock_map_route_api_returns_navigation_fields():
 def test_search_local_merchants_returns_senior_safe_merchants():
     goal = parse_goal('今天下午带爸妈出去轻松逛逛，晚上吃清淡一点。')
     merchants = search_local_merchants(goal)
-    assert merchants['restaurants'][0]['name'] == '轻悦生活餐厅'
-    assert merchants['friend_activities'] == []
-    assert merchants['couple_activities'] == []
-    assert merchants['drink_shops']
+    assert merchants['senior_activities']
+    assert all('score_features' in item for item in merchants['senior_activities'][:3])
+    assert merchants['restaurants'] == []
+    assert merchants['drink_shops'] == []
 
 
 def test_check_availability_finds_merchant_slot():

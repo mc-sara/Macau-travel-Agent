@@ -35,7 +35,7 @@ def test_api_plan_returns_senior_plan():
     assert status == 200
     result = payload["result"]
     assert result["goal"]["scenario"] == "senior"
-    assert result["best_plan"]["id"] == "senior_main"
+    assert result["best_plan"]["id"].startswith("senior_dynamic_")
     assert "长者" in result["best_plan"]["title"] or "银龄" in result["best_plan"]["title"]
     assert "senior_friendly" in result["best_plan"]["tags"]
     assert "澳门悬疑密室体验馆" not in [step["name"] for step in result["best_plan"]["timeline"]]
@@ -60,3 +60,6 @@ def test_api_execute_can_run_selected_senior_alternative_plan():
     assert payload["execution"]["status"] == "success"
     assert payload["execution"]["bookings"]
     assert payload["execution"]["final_message"]
+    assert payload["execution"]["route_card"]["sentences"]
+    assert payload["execution"]["oral_guide"]["mandarin"]
+    assert payload["execution"]["qwenpaw_actions"]

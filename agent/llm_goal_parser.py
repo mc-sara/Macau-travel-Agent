@@ -96,10 +96,29 @@ def load_llm_config(env_file: Optional[Path] = None) -> Dict[str, str]:
     configured_env_file = os.environ.get("MACAU_AGENT_ENV_FILE")
     path = env_file or (Path(configured_env_file) if configured_env_file else _project_root() / ".env")
     file_values = _parse_env_file(path)
+    default_base_url = "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
+    default_model = "qwen3.7-max"
     return {
-        "api_key": os.environ.get("OPENAI_API_KEY") or file_values.get("OPENAI_API_KEY", ""),
-        "base_url": (os.environ.get("OPENAI_BASE_URL") or file_values.get("OPENAI_BASE_URL", "")).rstrip("/"),
-        "model": os.environ.get("OPENAI_MODEL") or file_values.get("OPENAI_MODEL", "gpt-5.5"),
+        "api_key": (
+            os.environ.get("OPENAI_API_KEY")
+            or os.environ.get("DASHSCOPE_API_KEY")
+            or file_values.get("OPENAI_API_KEY", "")
+            or file_values.get("DASHSCOPE_API_KEY", "")
+        ),
+        "base_url": (
+            os.environ.get("OPENAI_BASE_URL")
+            or os.environ.get("DASHSCOPE_BASE_URL")
+            or file_values.get("OPENAI_BASE_URL", "")
+            or file_values.get("DASHSCOPE_BASE_URL", "")
+            or default_base_url
+        ).rstrip("/"),
+        "model": (
+            os.environ.get("OPENAI_MODEL")
+            or os.environ.get("DASHSCOPE_MODEL")
+            or file_values.get("OPENAI_MODEL", "")
+            or file_values.get("DASHSCOPE_MODEL", "")
+            or default_model
+        ),
     }
 
 

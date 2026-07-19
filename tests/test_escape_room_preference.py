@@ -10,11 +10,12 @@ def test_old_entertainment_text_routes_to_senior_safe_plan():
     assert "short_walking_distance" in goal["preferences"]
 
 
-def test_search_local_merchants_returns_senior_restaurant_for_senior_plan():
+def test_search_local_merchants_returns_senior_excel_activities_for_senior_plan():
     goal = parse_goal("我想带爸妈下午轻松逛逛，晚上吃点清淡的。")
     merchants = search_local_merchants(goal)
-    assert merchants["restaurants"]
-    assert merchants["restaurants"][0]["name"] == "轻悦生活餐厅"
+    assert merchants["senior_activities"]
+    assert merchants["senior_activities"][0]["name"] == "澳门文化中心"
+    assert merchants["restaurants"] == []
     assert merchants["friend_activities"] == []
     assert merchants["couple_activities"] == []
 
@@ -23,6 +24,6 @@ def test_plan_day_excludes_old_entertainment_activity():
     result = plan_day("我想带爸妈下午轻松逛逛，不想爬楼梯。")
     names = [step["name"] for step in result["best_plan"]["timeline"]]
     assert result["goal"]["scenario"] == "senior"
-    assert result["best_plan"]["id"] == "senior_main"
+    assert result["best_plan"]["id"].startswith("senior_dynamic_")
     assert "澳门悬疑密室体验馆" not in names
     assert "长者" in result["best_plan"]["title"]
