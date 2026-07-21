@@ -5,9 +5,9 @@ from agent.planner import plan_day
 
 
 EXAMPLES = {
-    "亲子家庭": "今天下午想和老婆孩子出去玩几个小时，别离家太远。",
-    "朋友聚会": "今天下午和朋友4个人出去玩，2男2女，安排一下。",
-    "情侣约会": "今天下午想和对象约会，浪漫一点但别太累。",
+    "长者低疲劳": "我从澳门大学出发，带爸妈轻松逛 2-3 个地方，不要爬楼梯，中途最好有厕所和座椅。",
+    "轮椅友好": "从议事亭前地出发，外婆坐轮椅，想找附近无障碍、少走路的路线。",
+    "下午慢游": "下午从澳门文化中心出发，安排一条适合长者的慢游路线。",
 }
 
 
@@ -16,7 +16,7 @@ st.title("🇲🇴 澳游半日管家 Agent")
 st.caption("一句话输入目标，Agent 自动规划澳门半日吃喝玩路线，并模拟预约、订位、点单和消息通知。")
 
 if "user_text" not in st.session_state:
-    st.session_state.user_text = EXAMPLES["亲子家庭"]
+    st.session_state.user_text = EXAMPLES["长者低疲劳"]
 if "plan_result" not in st.session_state:
     st.session_state.plan_result = None
 if "execution_result" not in st.session_state:

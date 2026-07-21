@@ -35,8 +35,8 @@ def test_search_local_merchants_returns_senior_safe_merchants():
     assert merchants['drink_shops'] == []
 
 
-def test_check_availability_finds_merchant_slot():
-    availability = check_availability('res_001', '17:30', 3)
+def test_check_availability_finds_excel_attraction_slot():
+    availability = check_availability('attraction_502', '14:00', 3)
     assert availability['available'] is True
     assert availability['queue_minutes'] == 0
-    assert availability['item_id'] == 'res_001'
+    assert availability['item_id'] == 'attraction_502'

@@ -40,81 +40,143 @@ def _truthy_feature(value: Any) -> bool:
     return str(value).strip() not in {"", "无", "官方未说明", "未知", "False", "false", "0"}
 
 
+def _feature_value(features: Dict[str, Any], key: str, default: int = 60) -> int:
+    value = features.get(key, default)
+    try:
+        return _clamp(float(value))
+    except (TypeError, ValueError):
+        return default
+
+
+def _raw_text(value: Any) -> str:
+    return str(value).strip().lower()
+
+
+def _collect_poi_risks(poi: Dict[str, Any], feature_breakdown: Dict[str, int]) -> List[str]:
+    raw = poi.get("accessibility_raw") or poi.get("accessibility") or {}
+    risks: List[str] = []
+    stairs_count = raw.get("stairs_count", 0) or 0
+    try:
+        stairs_count = int(float(stairs_count))
+    except (TypeError, ValueError):
+        stairs_count = 0
+    steep = raw.get("steep_slopes")
+    steep_text = _raw_text(steep)
+
+    if feature_breakdown["stairs_comfort"] < 60 or stairs_count > 20 or steep_text in {"high", "medium_high"} or steep is True:
+        risks.append("台阶或坡度风险较高，建议避开困难入口")
+    elif feature_breakdown["stairs_comfort"] < 75 or stairs_count > 8:
+        risks.append("有少量台阶或坡道，需放慢速度")
+
+    if feature_breakdown["walking_comfort"] < 60:
+        risks.append("内部步行距离偏长")
+    if feature_breakdown["rest_support"] < 60:
+        risks.append("休息座椅支持不足")
+    if feature_breakdown["toilet_support"] < 60:
+        risks.append("厕所或无障碍厕所信息不足")
+    if feature_breakdown["weather_comfort"] < 60:
+        risks.append("日晒或雨天暴露风险较高")
+    if feature_breakdown["crowd_comfort"] < 60:
+        risks.append("人流压力偏高")
+    if feature_breakdown["ground_safety"] < 60:
+        risks.append("地面或绊倒风险需要留意")
+    if feature_breakdown["standing_comfort"] < 60:
+        risks.append("久站风险偏高")
+
+    avoid_route = str(raw.get("avoid_route_zh", "")).strip()
+    if avoid_route:
+        risks.append(f"避让建议：{avoid_route}")
+    return list(dict.fromkeys(risks))[:5]
+
+
+def _collect_poi_reasons(poi: Dict[str, Any], feature_breakdown: Dict[str, int]) -> List[str]:
+    raw = poi.get("accessibility_raw") or poi.get("accessibility") or {}
+    reasons: List[str] = []
+    if feature_breakdown["walking_comfort"] >= 85:
+        reasons.append("内部步行距离短")
+    elif feature_breakdown["walking_comfort"] >= 75:
+        reasons.append("步行距离可控")
+
+    if feature_breakdown["stairs_comfort"] >= 85:
+        reasons.append("台阶和坡度压力低")
+    elif feature_breakdown["stairs_comfort"] >= 75:
+        reasons.append("台阶风险相对可控")
+
+    if feature_breakdown["accessibility_score"] >= 85:
+        reasons.append("无障碍入口、电梯或坡道支持较好")
+    elif feature_breakdown["accessibility_score"] >= 72:
+        reasons.append("基础无障碍条件尚可")
+
+    if feature_breakdown["rest_support"] >= 80 and feature_breakdown["toilet_support"] >= 80:
+        reasons.append("休息点和厕所支持较完整")
+    elif feature_breakdown["rest_support"] >= 80:
+        reasons.append("有较好的休息点")
+    elif feature_breakdown["toilet_support"] >= 80:
+        reasons.append("厕所支持较好")
+
+    if feature_breakdown["weather_comfort"] >= 82:
+        reasons.append("遮阴、室内或空调休息条件较好")
+    if feature_breakdown["crowd_comfort"] >= 82:
+        reasons.append("人流压力相对低")
+    if feature_breakdown["ground_safety"] >= 82:
+        reasons.append("地面安全性较好")
+    if feature_breakdown["standing_comfort"] >= 82:
+        reasons.append("不需要长时间站立")
+    if feature_breakdown["senior_interest_match"] >= 78:
+        reasons.append("内容适合长者慢慢参观")
+
+    best_access_route = str(raw.get("best_access_route_zh", "")).strip()
+    if best_access_route:
+        reasons.append(f"推荐入口：{best_access_route}")
+    if not reasons:
+        reasons.append(poi.get("reason") or "来自真实景点数据，适合短暂停留")
+    return list(dict.fromkeys(reasons))[:5]
+
+
 def score_poi(poi: Dict[str, Any], goal: Dict[str, Any]) -> Dict[str, Any]:
-    tags = set(poi.get("tags", []))
-    preferences = set(goal.get("preferences", []))
     features = dict(poi.get("score_features") or {})
-    accessibility = poi.get("accessibility") or {}
-
-    senior_friendly = features.get("senior_friendly", 90 if "senior_friendly" in tags else 65)
-    low_fatigue = features.get("low_fatigue", 88 if "low_fatigue" in tags else 65)
-    rest_area = features.get("rest_area", 90 if "rest_area" in tags else 55)
-    toilet_access = features.get("toilet_access", 85 if _truthy_feature(accessibility.get("accessible_toilet")) else 60)
-    avoid_stairs = features.get("avoid_stairs", 45 if accessibility.get("stairs_count", 0) else 85)
-    poi_text = " ".join(str(poi.get(key, "")) for key in ["name", "category", "reason"])
-    if any(word in poi_text for word in ["石阶", "台阶", "楼梯"]):
-        avoid_stairs = min(avoid_stairs, 40)
-        low_fatigue = min(low_fatigue, 65)
-    indoor = features.get("indoor", 90 if "indoor" in tags else 55)
-
-    preference_match = 70
-    if preferences:
-        preference_match += min(25, sum(1 for item in preferences if item in tags) * 8)
-    if "historic" in tags or "photo_friendly" in tags:
-        preference_match += 5
+    feature_breakdown = {
+        "walking_comfort": _feature_value(features, "walking_comfort", _feature_value(features, "low_fatigue", 65)),
+        "stairs_comfort": _feature_value(features, "stairs_comfort", _feature_value(features, "avoid_stairs", 65)),
+        "accessibility_score": _feature_value(features, "accessibility_score", _feature_value(features, "senior_friendly", 65)),
+        "rest_support": _feature_value(features, "rest_support", _feature_value(features, "rest_area", 60)),
+        "toilet_support": _feature_value(features, "toilet_support", _feature_value(features, "toilet_access", 60)),
+        "weather_comfort": _feature_value(features, "weather_comfort", _feature_value(features, "indoor", 60)),
+        "crowd_comfort": _feature_value(features, "crowd_comfort", 60),
+        "ground_safety": _feature_value(features, "ground_safety", 60),
+        "standing_comfort": _feature_value(features, "standing_comfort", 60),
+        "senior_interest_match": _feature_value(features, "senior_interest_match", 65),
+    }
 
     weights = {
-        "senior_friendly": 0.30,
-        "low_fatigue": 0.20,
-        "rest_toilet": 0.20,
-        "avoid_stairs": 0.15,
-        "preference_match": 0.10,
-        "indoor": 0.05,
+        "walking_comfort": 0.20,
+        "stairs_comfort": 0.15,
+        "accessibility_score": 0.15,
+        "rest_support": 0.12,
+        "toilet_support": 0.12,
+        "weather_comfort": 0.08,
+        "crowd_comfort": 0.08,
+        "ground_safety": 0.05,
+        "senior_interest_match": 0.05,
     }
-    rest_toilet = (rest_area + toilet_access) / 2
-    score = _weighted_score(
-        {
-            "senior_friendly": senior_friendly,
-            "low_fatigue": low_fatigue,
-            "rest_toilet": rest_toilet,
-            "avoid_stairs": avoid_stairs,
-            "preference_match": preference_match,
-            "indoor": indoor,
-        },
-        weights,
-    )
-
-    reasons: List[str] = []
-    if senior_friendly >= 85:
-        reasons.append("适合长者慢慢参观")
-    if low_fatigue >= 85:
-        reasons.append("整体疲劳度较低")
-    if rest_area >= 85 or toilet_access >= 80:
-        reasons.append("有休息或洗手间支持")
-    if indoor >= 85:
-        reasons.append("室内或半室内体验较稳定")
-    if not reasons:
-        reasons.append(poi.get("reason") or "来自真实景点数据")
-
-    risk_flags: List[str] = []
-    if avoid_stairs < 70:
-        risk_flags.append("可能有台阶或坡道，需现场留意")
-    if rest_area < 65:
-        risk_flags.append("休息点信息不足")
-    if toilet_access < 65:
-        risk_flags.append("洗手间信息不足")
+    score = _weighted_score(feature_breakdown, weights)
+    risk_flags = _collect_poi_risks(poi, feature_breakdown)
+    reasons = _collect_poi_reasons(poi, feature_breakdown)
 
     return {
         "score": score,
-        "reasons": reasons[:3],
+        "reasons": reasons,
         "risk_flags": risk_flags,
+        "feature_breakdown": feature_breakdown,
+        # Backward-compatible shape used by current plan-level scorer.
         "breakdown": {
-            "senior_friendly": _clamp(senior_friendly),
-            "low_fatigue": _clamp(low_fatigue),
-            "rest_toilet": _clamp(rest_toilet),
-            "avoid_stairs": _clamp(avoid_stairs),
-            "preference_match": _clamp(preference_match),
-            "indoor": _clamp(indoor),
+            **feature_breakdown,
+            "senior_friendly": feature_breakdown["accessibility_score"],
+            "low_fatigue": _clamp((feature_breakdown["walking_comfort"] + feature_breakdown["stairs_comfort"] + feature_breakdown["standing_comfort"]) / 3) if "standing_comfort" in feature_breakdown else _clamp((feature_breakdown["walking_comfort"] + feature_breakdown["stairs_comfort"]) / 2),
+            "rest_toilet": _clamp((feature_breakdown["rest_support"] + feature_breakdown["toilet_support"]) / 2),
+            "avoid_stairs": feature_breakdown["stairs_comfort"],
+            "preference_match": feature_breakdown["senior_interest_match"],
+            "indoor": feature_breakdown["weather_comfort"],
         },
     }
 

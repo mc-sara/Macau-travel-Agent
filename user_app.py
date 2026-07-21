@@ -8,37 +8,34 @@ from agent.planner import plan_day
 
 
 EXAMPLES = {
-    "朋友密室": "今天下午2男3女想玩密室，顺便吃饭，别太贵。",
-    "亲子轻松玩": "今天下午想和老婆孩子出去玩几个小时，别离家太远。",
-    "情侣约会": "今天下午想和对象约会，浪漫一点但别太累。",
-    "带爸妈低疲劳": "今天下午带爸妈在澳门轻松逛逛，不要爬楼梯，想吃本地特色。",
+    "长者低疲劳": "我从澳门大学出发，带爸妈轻松逛 2-3 个地方，不要爬楼梯，中途最好有厕所和座椅。",
+    "轮椅友好": "从议事亭前地出发，外婆坐轮椅，想找附近无障碍、少走路的路线。",
+    "下午慢游": "下午从澳门文化中心出发，安排一条适合长者的慢游路线。",
 }
 
 SCENARIO_LABELS = {
-    "family": "家庭 / 亲子 / 长辈",
-    "friends": "朋友结伴",
-    "couple": "情侣约会",
-    "general": "普通出行",
+    "senior": "长者适老出行",
+    "general": "长者适老出行",
 }
 
 PREFERENCE_LABELS = {
-    "escape_room": "密室 / 剧本杀",
     "indoor_activity": "室内活动",
-    "social": "适合聊天聚会",
     "photo_friendly": "适合拍照",
-    "dinner_together": "一起吃饭",
-    "chat_friendly": "适合聊天",
-    "kid_friendly": "适合小朋友",
-    "senior_friendly": "适合长辈",
+    "senior_friendly": "适合长者",
     "low_fatigue": "不要太累",
     "low_calorie": "低卡饮食",
     "low_calorie_food": "低卡饮食",
     "avoid_stairs": "避免楼梯",
-    "romantic": "浪漫氛围",
-    "surprise_action": "惊喜安排",
     "short_walking_distance": "少走路",
     "local_specialty": "本地特色",
     "budget_control": "控制预算",
+    "rest_area": "有休息点",
+    "toilet_access": "厕所方便",
+    "wheelchair_friendly": "轮椅友好",
+    "elevator_required": "需要电梯",
+    "flat_route": "平缓路线",
+    "shaded_or_indoor": "遮阴/室内优先",
+    "simple_transport": "交通简单",
 }
 
 
@@ -290,7 +287,7 @@ st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 
 if "user_text" not in st.session_state:
-    st.session_state.user_text = EXAMPLES["朋友密室"]
+    st.session_state.user_text = EXAMPLES["长者低疲劳"]
 if "plan_result" not in st.session_state:
     st.session_state.plan_result = None
 if "selected_plan_id" not in st.session_state:
@@ -399,9 +396,9 @@ def render_input() -> None:
             <div class="helper-note">
                 <b>建议补充这些信息：</b><br>
                 1. 几个人，男女各几个<br>
-                2. 和谁去：朋友 / 情侣 / 亲子 / 父母<br>
-                3. 想玩什么：密室、拍照、亲子、浪漫约会<br>
-                4. 特别要求：不要太累、低卡、预算、室内优先
+                2. 长者人数和行动能力<br>
+                3. 是否能走楼梯、是否需要轮椅/电梯<br>
+                4. 特别要求：少走路、厕所、座椅、室内优先
             </div>
             """,
             unsafe_allow_html=True,

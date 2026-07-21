@@ -15,10 +15,9 @@ def test_data_path_returns_existing_mock_merchants_file():
 
 def test_load_merchants_returns_required_categories():
     merchants = load_merchants()
-    for key in ['family_activities', 'restaurants', 'drink_shops', 'friend_activities', 'couple_activities', 'gift_shops']:
+    for key in ['senior_activities', 'restaurants', 'drink_shops', 'gift_shops']:
         assert key in merchants
         assert isinstance(merchants[key], list)
-        assert len(merchants[key]) >= 1
 
 
 def test_load_excel_preview_reads_rows():

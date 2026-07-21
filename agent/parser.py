@@ -81,9 +81,8 @@ def parse_structured_goal(
 def adapt_structured_goal_to_legacy_goal(structured_goal: Dict[str, Any]) -> Dict[str, Any]:
     """Adapt structured goal to the existing planner-compatible goal format.
 
-    The legacy planner still expects a flat `scenario` field. For this cleanup
-    pass, every valid relationship routes into `senior` so later planner/scorer
-    cleanup can remove the remaining family/friends/couple branches safely.
+    The planner now only supports the senior route domain, so every parsed
+    relationship maps to `senior`.
     """
     relationship = structured_goal.get("relationship_type", "general")
     scenario = RELATIONSHIP_TO_SCENARIO.get(relationship, "senior")

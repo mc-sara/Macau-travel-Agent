@@ -14,10 +14,17 @@ def test_search_local_merchants_returns_senior_excel_activities_for_senior_plan(
     goal = parse_goal("我想带爸妈下午轻松逛逛，晚上吃点清淡的。")
     merchants = search_local_merchants(goal)
     assert merchants["senior_activities"]
-    assert merchants["senior_activities"][0]["name"] == "澳门文化中心"
+    first = merchants["senior_activities"][0]
+    assert first["name"]
+    assert "score_features" in first
+    assert "accessibility_raw" in first
+    assert "transport_raw" in first
+    assert "category_info" in first
+    assert "accessibility_score" in first["score_features"]
     assert merchants["restaurants"] == []
-    assert merchants["friend_activities"] == []
-    assert merchants["couple_activities"] == []
+    assert "friend_activities" not in merchants
+    assert "couple_activities" not in merchants
+    assert "family_activities" not in merchants
 
 
 def test_plan_day_excludes_old_entertainment_activity():
