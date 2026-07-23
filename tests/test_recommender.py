@@ -1,5 +1,6 @@
 from agent.parser import parse_goal
-from agent.recommender import _beam_search, _rank_candidate_pois, _resolve_origin, recommend_itineraries
+from agent.tools import search_attractions
+from agent.recommender import _beam_search, _canonical_poi_key, _rank_candidate_pois, _resolve_origin, recommend_itineraries
 
 
 def test_recommend_itineraries_returns_dynamic_real_routes():
@@ -86,3 +87,33 @@ def test_final_plan_contains_verified_routes_and_explanations():
     assert all(route.get('from_name') and route.get('to_name') for route in plan['routes'])
     assert plan['recommendation_reasons']
     assert 'origin_aware_beam_search' in plan['tags']
+    assert plan['map_view']['provider'] == 'leaflet_osm'
+    assert len(plan['map_view']['points']) == len(plan['poi_details']) + 1
+    assert len(plan['map_view']['polyline']) == len(plan['map_view']['points'])
+    assert plan['map_view']['points'][0]['type'] == 'origin'
+
+
+def test_beam_search_dedupes_same_place_aliases():
+    goal = parse_goal('我想带爸妈下午轻松逛逛，不想爬楼梯，最好有地方坐，晚上吃点清淡的。')
+    first_route = _beam_search(goal, _rank_candidate_pois(goal, limit=None))[0][0]
+    keys = [_canonical_poi_key(poi) for poi in first_route]
+    assert len(keys) == len(set(keys))
+    names = [poi['name'] for poi in first_route]
+    assert not ({'澳门仁慈堂大楼', '澳門仁慈堂大樓'} <= set(names))
+
+
+def test_confirmed_duplicate_pois_removed_from_excel_candidates():
+    goal = parse_goal('我想带爸妈下午轻松逛逛，不想爬楼梯，最好有地方坐。')
+    all_names = {poi['name'] for poi in search_attractions(goal, limit=None)}
+    removed = {
+        '澳門仁慈堂大樓', '莲溪庙', '白鸽巢前地', '大炮台陈列室', '哪咤庙（大三巴）', '耶稣会纪念广场', '崗頂前地',
+        '東望洋炮台、聖母雪地殿教堂及燈塔', '媽祖閣（媽閣廟）', '玫瑰聖母堂（板樟堂）', '聖奧斯定堂',
+        '三街會館（關帝廟）', '马礼逊教堂', '仁慈堂博物馆', '妈阁庙前地壁画', '圣若瑟修院藏珍馆',
+    }
+    assert all_names.isdisjoint(removed)
+    kept = {
+        '澳门仁慈堂大楼', '莲峰庙', '白鸽巢公园', '大炮台', '大三巴', '岗顶前地',
+        '东望洋炮台、圣母雪地殿教堂及灯塔', '妈祖阁（妈阁庙）', '玫瑰圣母堂（板樟堂）',
+        '圣奥斯定教堂', '三街会馆（关帝庙）', '基督教坟场', '圣若瑟修院大楼、圣若瑟修院教堂、前地及石阶',
+    }
+    assert kept <= all_names
