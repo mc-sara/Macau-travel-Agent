@@ -41,6 +41,20 @@ def test_api_plan_returns_senior_plan():
     assert "澳门悬疑密室体验馆" not in [step["name"] for step in result["best_plan"]["timeline"]]
 
 
+def test_api_analyze_returns_goal_without_route_plan():
+    server, base_url = _start_test_server()
+    try:
+        status, payload = _post_json(base_url + "/api/analyze", {"user_text": "我想带爸妈下午轻松逛逛，不想爬楼梯，最好有地方坐。", "llm_mode": "mock"})
+    finally:
+        server.shutdown()
+        server.server_close()
+
+    assert status == 200
+    assert payload["goal"]["scenario"] == "senior"
+    assert "best_plan" not in payload
+    assert payload["structured_goal"]
+
+
 def test_api_execute_can_run_selected_senior_alternative_plan():
     server, base_url = _start_test_server()
     try:

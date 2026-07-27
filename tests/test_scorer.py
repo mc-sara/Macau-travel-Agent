@@ -18,15 +18,16 @@ def test_score_senior_plan_returns_explanations_and_risks():
     assert score['score'] >= 80
     assert score['score_breakdown']
     assert set(score['score_breakdown']) == {'senior_friendly', 'transport_simplicity', 'low_fatigue', 'rest_toilet_support', 'executable'}
-    assert any('长者' in reason or '低疲劳' in reason for reason in score['reasons'])
-    assert any('人流' in risk or '体力' in risk for risk in score['risks'])
+    assert any('长者' in reason or '慢慢走' in reason for reason in score['reasons'])
+    assert any('人多' in risk or '累了' in risk for risk in score['risks'])
 
 
 def test_score_senior_plan_prioritizes_short_walking_and_execution():
     score = score_plan(_senior_plan(), {'scenario': 'senior'})
     assert score['score_breakdown']['transport_simplicity'] >= 80
     assert score['score_breakdown']['executable'] == 100
-    assert any('QwenPaw' in reason for reason in score['reasons'])
+    assert all('QwenPaw' not in reason for reason in score['reasons'])
+    assert any('第一站节奏轻' in reason for reason in score['reasons'])
 
 
 def test_score_penalizes_long_walking_segments():

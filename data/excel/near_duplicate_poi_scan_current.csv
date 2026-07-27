@@ -1,0 +1,38 @@
+﻿class,id_a,name_a,en_a,id_b,name_b,en_b,distance_m,name_sim,same_cluster,same_region,cluster_a,cluster_b,addr_a,addr_b
+可能同一景区/子点,124,圣若瑟修院藏珍馆,Treasure of Sacred Art of St. Joseph's Seminary,537,圣若瑟修院大楼、圣若瑟修院教堂、前地及石阶,St. Joseph's Seminary and Church,83.4,0.56,True,True,senado_st_paul,senado_st_paul,澳门三巴仔横街圣若瑟修院教堂,三巴仔横街
+可能同一景区/子点,503,澳门文学馆,The House of Macao Literature,505,澳门中央图书馆,Macao Central Library,85.9,0.5,True,True,guia_tap_seac,guia_tap_seac,澳门荷兰园大马路95号A-B座,澳门荷兰园大马路89号A-B
+可能同一景区/子点,117,玫瑰圣母堂（板樟堂）,St. Dominic's Church,541,望德圣母堂,St. Lazarus' Church,97.4,0.57,True,True,senado_st_paul,senado_st_paul,板樟堂前地；已合并玫瑰聖母堂（板樟堂）重复记录,圣母堂前地11号
+可能同一景区/子点,308,路环观音古庙,Kun Iam Temple (Coloane),313,路环天后古庙,Tin Hau Temple,126.7,0.67,True,True,coloane_village,coloane_village,澳门路环水泉公地观音古庙,澳门路环天后古庙
+同坐标或同建筑范围,114,妈阁庙前地壁画,Murals at Largo do Pagode da Barra,115,妈祖阁（妈阁庙）,A-Ma Temple,13.1,0.46,True,True,barra,barra,澳门妈阁上街,妈阁庙前地；已合并媽祖閣（媽閣廟）重复记录
+同坐标或同建筑范围,515,岗顶剧院,Dom Pedro V Theatre,521,何東圖書館大樓,Sir Robert Ho Tung Library,22.1,0.32,True,True,senado_st_paul,senado_st_paul,岗顶前地,澳门岗顶前地何东图书馆大楼
+同坐标或同建筑范围,521,何東圖書館大樓,Sir Robert Ho Tung Library,124,圣若瑟修院藏珍馆,Treasure of Sacred Art of St. Joseph's Seminary,24.3,0.35,True,True,senado_st_paul,senado_st_paul,澳门岗顶前地何东图书馆大楼,澳门三巴仔横街圣若瑟修院教堂
+明确重复/同名变体,501,澳门仁慈堂大楼,Holy House of Mercy,207,仁慈堂博物馆,Museum of the Holy House of Mercy,17.7,1.0,True,True,senado_st_paul,senado_st_paul,议事亭前地；包含仁慈堂博物馆,澳门仁慈堂右巷二号（议事亭前地）
+近距离但多半不同点,515,岗顶剧院,Dom Pedro V Theatre,124,圣若瑟修院藏珍馆,Treasure of Sacred Art of St. Joseph's Seminary,26.2,0.17,True,True,senado_st_paul,senado_st_paul,岗顶前地,澳门三巴仔横街圣若瑟修院教堂
+近距离但多半不同点,501,澳门仁慈堂大楼,Holy House of Mercy,541,望德圣母堂,St. Lazarus' Church,31.7,0.3,True,True,senado_st_paul,senado_st_paul,议事亭前地；包含仁慈堂博物馆,圣母堂前地11号
+近距离但多半不同点,304,计单奴街66号壁画,Mural at Rua do Caetano No.66,312,路环圣方济各圣堂,St. Francis Xavier Church,37.0,0.13,True,True,coloane_village,coloane_village,澳门路环计单奴街66号,路环计单奴街／马忌士前地
+近距离但多半不同点,207,仁慈堂博物馆,Museum of the Holy House of Mercy,541,望德圣母堂,St. Lazarus' Church,37.2,0.23,True,True,senado_st_paul,senado_st_paul,澳门仁慈堂右巷二号（议事亭前地）,圣母堂前地11号
+近距离但多半不同点,304,计单奴街66号壁画,Mural at Rua do Caetano No.66,314,路环图书馆,Coloane Library,42.7,0.16,True,True,coloane_village,coloane_village,澳门路环计单奴街66号,路环十月初五马路
+近距离但多半不同点,308,路环观音古庙,Kun Iam Temple (Coloane),316,十月初五马路壁画,Mural at Avenida de Cinco de Outubro,45.8,0.33,True,True,coloane_village,coloane_village,澳门路环水泉公地观音古庙,澳门路环十月初五马路
+近距离但多半不同点,308,路环观音古庙,Kun Iam Temple (Coloane),314,路环图书馆,Coloane Library,46.7,0.42,True,True,coloane_village,coloane_village,澳门路环水泉公地观音古庙,路环十月初五马路
+近距离但多半不同点,547,亞婆井前地,Lilau Square,320,主教山小堂,Chapel of Our Lady of Penha,47.7,0.24,True,True,barra,barra,澳门亚婆井前地,西望洋山顶
+近距离但多半不同点,522,何贤公园,Comendador Ho Yin Garden,550,中华民族雕塑园,Sculpture Park of Chinese Nationalities,52.4,0.29,True,True,nape_cultural,nape_cultural,澳门宋玉生广场,澳门宋玉生广场何贤公园
+近距离但多半不同点,503,澳门文学馆,The House of Macao Literature,533,饶宗颐学艺馆,Jao Tsung-I Academy,53.1,0.36,True,True,guia_tap_seac,guia_tap_seac,澳门荷兰园大马路95号A-B座,澳门荷兰园大马路95号C-D座
+近距离但多半不同点,505,澳门中央图书馆,Macao Central Library,533,饶宗颐学艺馆,Jao Tsung-I Academy,54.6,0.29,True,True,guia_tap_seac,guia_tap_seac,澳门荷兰园大马路89号A-B,澳门荷兰园大马路95号C-D座
+近距离但多半不同点,521,何東圖書館大樓,Sir Robert Ho Tung Library,535,圣奥斯定教堂,St. Augustine's Church,56.0,0.19,True,True,senado_st_paul,senado_st_paul,澳门岗顶前地何东图书馆大楼,岗顶前地2号；已合并聖奧斯定堂重复记录
+近距离但多半不同点,312,路环圣方济各圣堂,St. Francis Xavier Church,314,路环图书馆,Coloane Library,57.5,0.31,True,True,coloane_village,coloane_village,路环计单奴街／马忌士前地,路环十月初五马路
+近距离但多半不同点,515,岗顶剧院,Dom Pedro V Theatre,535,圣奥斯定教堂,St. Augustine's Church,57.8,0.17,True,True,senado_st_paul,senado_st_paul,岗顶前地,岗顶前地2号；已合并聖奧斯定堂重复记录
+近距离但多半不同点,529,卢家大屋,Lou Kau Mansion,551,主教座堂（大堂）,Cathedral of the Nativity of Our Lady,58.2,0.2,True,True,senado_st_paul,senado_st_paul,大堂巷7号,大堂前地1号
+近距离但多半不同点,507,白鸽巢公园,Camões Garden,122,圣安多尼堂及前地（花王堂）,St. Anthony's Church,67.0,0.13,True,True,senado_st_paul,senado_st_paul,澳门白鸽巢前地；包含白鸽巢前地,花王堂前地
+近距离但多半不同点,314,路环图书馆,Coloane Library,316,十月初五马路壁画,Mural at Avenida de Cinco de Outubro,68.5,0.23,True,True,coloane_village,coloane_village,路环十月初五马路,澳门路环十月初五马路
+近距离但多半不同点,527,俊秀围／俊秀里,Pátio de Chôn Sau,123,大三巴,Ruins of St. Paul's,69.3,0.33,True,True,senado_st_paul,senado_st_paul,澳门俊秀围/俊秀里,耶稣会纪念广场；包含哪吒庙、耶稣会纪念广场及大三巴牌坊前地石阶
+近距离但多半不同点,319,通讯博物馆,Communications Museum of Macao,548,伊斯兰清真寺及坟场,Macau Islamic Mosque and Cemetery,71.4,0.18,True,True,guia_tap_seac,guia_tap_seac,澳门马交石炮台马路七号,嚤啰园路
+近距离但多半不同点,502,澳门文化中心,Macao Cultural Centre,545,冼星海纪念铜像,Bronze statue of Xian Xinghai,77.4,0.23,True,True,nape_cultural,nape_cultural,澳门新填海区冼星海大马路,冼星海大马路与柏林街交界处
+近距离但多半不同点,113,鲁班先师木工艺陈列馆,Master Lu Ban Woodcraft Exhibition Hall,540,同善堂历史档案陈列馆,Tung Sin Tong Historical Archive Exhibition Hall,77.8,0.45,True,True,senado_st_paul,senado_st_paul,澳门庇山耶街39–41号之间（上架行会馆内）,澳门庇山耶街55号（典当业展示馆后面）
+近距离但多半不同点,535,圣奥斯定教堂,St. Augustine's Church,124,圣若瑟修院藏珍馆,Treasure of Sacred Art of St. Joseph's Seminary,78.3,0.23,True,True,senado_st_paul,senado_st_paul,岗顶前地2号；已合并聖奧斯定堂重复记录,澳门三巴仔横街圣若瑟修院教堂
+近距离但多半不同点,111,加思栏花园（南湾花园）,São Francisco Garden,526,加思栏炮台,São Francisco Barracks,240.5,0.74,True,True,senado_st_paul,senado_st_paul,澳门南湾大马路东望洋新街,家辣堂街
+近距离但多半不同点,105,大炮台,Mount Fortress,315,哪咤古庙（柿山）,Na Tcha Temple (Mount Fortress),241.1,1.0,True,True,senado_st_paul,senado_st_paul,澳门博物馆前地112号大炮台；包含大炮台陈列室,哪咤庙斜巷
+近距离但多半不同点,309,路环码头,Coloane Pier,314,路环图书馆,Coloane Library,298.3,0.72,True,True,coloane_village,coloane_village,澳门路环码头,路环十月初五马路
+近距离但多半不同点,536,圣老楞佐堂及前地（风顺堂）,St. Lawrence's Church,541,望德圣母堂,St. Lazarus' Church,431.8,0.72,True,True,senado_st_paul,senado_st_paul,风顺堂街（由官印局街进入）,圣母堂前地11号
+近距离但多半不同点,117,玫瑰圣母堂（板樟堂）,St. Dominic's Church,122,圣安多尼堂及前地（花王堂）,St. Anthony's Church,471.7,0.72,True,True,senado_st_paul,senado_st_paul,板樟堂前地；已合并玫瑰聖母堂（板樟堂）重复记录,花王堂前地
+近距离但多半不同点,509,包公庙及医灵庙,Bao Gong Temple,306,康公庙,Hong Kung Temple,506.4,0.74,False,False,guia_tap_seac,taipa_village,澳门福庆街,澳门康公庙前地
+近距离但多半不同点,310,路环三圣宫（金花庙）,Sam Seng Temple,318,谭公庙,Tam Kong Temple,516.2,0.77,True,True,coloane_village,coloane_village,澳门路环三圣宫,路环十月初五马路／谭公庙前地

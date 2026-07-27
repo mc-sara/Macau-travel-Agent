@@ -3,10 +3,12 @@ import mimetypes
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Dict, Tuple
-from urllib.parse import unquote, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 from agent.executor import execute_plan
+from agent.parser import parse_goal
 from agent.planner import plan_day
+from agent.tools import search_origin_candidates
 from agent.tts import synthesize_speech
 
 
@@ -41,6 +43,21 @@ def _read_json(handler: BaseHTTPRequestHandler) -> Tuple[Dict[str, Any], str]:
     return data, ""
 
 
+
+def _origin_coords_from_payload(data: Dict[str, Any]) -> Dict[str, Any]:
+    try:
+        lat = data.get("origin_lat")
+        lng = data.get("origin_lng")
+        if lat is None or lng is None or str(lat).strip() == "" or str(lng).strip() == "":
+            return {}
+        latitude = float(lat)
+        longitude = float(lng)
+    except (TypeError, ValueError):
+        return {}
+    if not (113.42 <= longitude <= 113.68 and 22.03 <= latitude <= 22.25):
+        return {}
+    return {"latitude": latitude, "longitude": longitude, "location": f"{longitude},{latitude}"}
+
 def _all_plans(result: Dict[str, Any]) -> list:
     return [result["best_plan"]] + result.get("alternatives", [])
 
@@ -66,7 +83,20 @@ class MacauAgentHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self) -> None:
-        path = unquote(urlparse(self.path).path)
+        parsed = urlparse(self.path)
+        path = unquote(parsed.path)
+        if path == "/api/geocode":
+            query = (parse_qs(parsed.query).get("q") or [""])[0].strip()
+            if not query:
+                _json_response(self, 400, {"error": "q is required"})
+                return
+            try:
+                candidates = search_origin_candidates(query)
+            except Exception as exc:
+                _json_response(self, 500, {"error": str(exc)})
+                return
+            _json_response(self, 200, {"status": "success", "query": query, "candidates": candidates})
+            return
         if path == "/":
             path = "/user_compact.html"
         if path == "/health":
@@ -97,15 +127,53 @@ class MacauAgentHandler(BaseHTTPRequestHandler):
                 _json_response(self, 400, {"error": error})
                 return
             user_text = str(data.get("user_text", "")).strip()
+            origin_text = str(data.get("origin_text", "")).strip()
+            origin_coords = _origin_coords_from_payload(data)
             if not user_text:
                 _json_response(self, 400, {"error": "user_text is required"})
                 return
             try:
-                result = plan_day(user_text)
+                result = plan_day(user_text, origin_text=origin_text, origin_coords=origin_coords)
             except Exception as exc:  # keep UI from hanging during demo
                 _json_response(self, 500, {"error": str(exc)})
                 return
             _json_response(self, 200, {"status": "success", "result": result})
+            return
+
+        if path == "/api/analyze":
+            data, error = _read_json(self)
+            if error:
+                _json_response(self, 400, {"error": error})
+                return
+            user_text = str(data.get("user_text", "")).strip()
+            origin_text = str(data.get("origin_text", "")).strip()
+            if not user_text:
+                _json_response(self, 400, {"error": "user_text is required"})
+                return
+            try:
+                llm_mode = str(data.get("llm_mode", "auto")).strip() or "auto"
+                goal = parse_goal(user_text, use_llm=(llm_mode != "mock"), llm_mode=llm_mode)
+                goal["scenario"] = "senior"
+                if origin_text:
+                    goal["origin"] = origin_text
+                    structured = goal.setdefault("structured_goal", {})
+                    location = structured.setdefault("location", {})
+                    if isinstance(location, dict):
+                        location["start_location"] = origin_text
+            except Exception as exc:
+                _json_response(self, 500, {"error": str(exc)})
+                return
+            _json_response(
+                self,
+                200,
+                {
+                    "status": "success",
+                    "goal": goal,
+                    "structured_goal": goal.get("structured_goal", {}),
+                    "clarification_needed": goal.get("structured_goal", {}).get("clarification_needed", False),
+                    "clarification_questions": goal.get("structured_goal", {}).get("clarification_questions", []),
+                },
+            )
             return
 
         if path == "/api/execute":
@@ -114,13 +182,15 @@ class MacauAgentHandler(BaseHTTPRequestHandler):
                 _json_response(self, 400, {"error": error})
                 return
             user_text = str(data.get("user_text", "")).strip()
+            origin_text = str(data.get("origin_text", "")).strip()
+            origin_coords = _origin_coords_from_payload(data)
             plan_id = str(data.get("plan_id", "")).strip()
             if not user_text:
                 _json_response(self, 400, {"error": "user_text is required"})
                 return
             try:
                 plan_result = data.get("plan_result") if isinstance(data.get("plan_result"), dict) else None
-                result = plan_result or plan_day(user_text)
+                result = plan_result or plan_day(user_text, origin_text=origin_text, origin_coords=origin_coords)
                 plan = _find_plan(result, plan_id)
                 execution = execute_plan(plan, result["goal"])
             except Exception as exc:

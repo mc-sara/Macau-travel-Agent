@@ -59,9 +59,17 @@ def test_build_route_card_has_three_instruction_fields():
     assert '电梯' in card['sentences'][2] or '平路' in card['sentences'][2]
 
 
-def test_build_oral_guide_returns_mandarin_and_cantonese_copy():
+def test_build_oral_guide_returns_full_route_mandarin_and_cantonese_copy():
     result = plan_day('下午带爷爷奶奶在澳门走走，路不要太长，中途最好有厕所和座椅。')
-    guide = build_oral_guide(result['best_plan'], result['goal'])
-    assert '我们现在先去' in guide['mandarin']
-    assert '我哋而家先去' in guide['cantonese']
+    plan = result['best_plan']
+    guide = build_oral_guide(plan, result['goal'])
+    stop_names = [step['name'] for step in plan['timeline']]
+    for name in stop_names:
+        assert name in guide['mandarin']
+        assert name in guide['cantonese']
+    assert '今天这条路线是' in guide['mandarin']
+    assert '今日呢条路线系' in guide['cantonese']
+    assert '最后' in guide['mandarin']
+    assert guide['mandarin'].count('180米') < 2
+    assert guide['mandarin'].count('180 米') < 2
     assert guide['tts_config']['rate'] == '-15%'

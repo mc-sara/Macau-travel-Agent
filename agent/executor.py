@@ -52,16 +52,72 @@ def build_route_card(plan: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _route_duration_text(route: Dict[str, Any]) -> str:
+    duration = route.get("duration_min")
+    if duration is None or str(duration).strip() == "":
+        return "几分钟内"
+    try:
+        return f"约 {int(round(float(duration)))} 分钟"
+    except (TypeError, ValueError):
+        return f"约 {duration} 分钟"
+
+
+def _route_walking_text(route: Dict[str, Any], *, cantonese: bool = False) -> str:
+    walking = route.get("walking_distance_m")
+    if walking is None or str(walking).strip() == "":
+        return "步行距离较短" if not cantonese else "步行距离唔长"
+    try:
+        meters = int(round(float(walking)))
+    except (TypeError, ValueError):
+        return f"步行约 {walking} 米" if not cantonese else f"步行大概 {walking} 米"
+    return f"步行约 {meters} 米" if not cantonese else f"步行大概 {meters} 米"
+
+
+def _route_leg_text(route: Dict[str, Any], *, cantonese: bool = False) -> str:
+    return f"{_route_duration_text(route)}，{_route_walking_text(route, cantonese=cantonese)}"
+
+
+def _station_tip(index: int, total: int, *, cantonese: bool = False) -> str:
+    if cantonese:
+        if index == 0:
+            return "第一站唔使急，落车之后先睇清楚入口，尽量行平路。"
+        if index == total - 1:
+            return "最后一站可以停留短啲，如果长者攰，可以直接喺附近休息或者准备返程。"
+        return "呢一站适合中途放慢节奏，可以坐低休息下，饮啖水再继续。"
+    if index == 0:
+        return "第一站不用着急，下车后先看清楚入口，尽量走平路。"
+    if index == total - 1:
+        return "最后一站停留时间可以短一点，如果长者觉得累，可以直接在附近休息或准备返程。"
+    return "这一站适合中途放慢节奏，可以坐下来休息一下，喝点水再继续。"
+
+
 def build_oral_guide(plan: Dict[str, Any], goal: Dict[str, Any]) -> Dict[str, Any]:
-    first = _first_step(plan).get("name", "第一站")
-    route = _first_route(plan)
-    destination = route.get("destination", first)
-    walking = route.get("walking_distance_m", 180)
-    mandarin = f"我们现在先去{first}。等一下在{destination}附近下车，下车后慢慢走，大概步行{walking}米，尽量走平路和电梯。路上如果累了，就先坐下来休息，不用赶时间。"
-    cantonese = f"我哋而家先去{first}。等阵喺{destination}附近落车，落车之后慢慢行，大概行{walking}米，尽量行平路同搭电梯。中途攰嘅话，就坐低休息阵，唔使赶。"
+    stops = [step.get("name", "") for step in plan.get("timeline", []) if step.get("name")]
+    routes = plan.get("routes", [])
+    if not stops:
+        stops = [_first_step(plan).get("name", "第一站")]
+    route_names = " → ".join(stops)
+
+    mandarin_parts = [f"今天这条路线是：{route_names}。整体节奏放慢，适合长者边走边休息。"]
+    cantonese_parts = [f"今日呢条路线系：{route_names}。整体节奏会慢啲，适合长者一路行一路休息。"]
+    for index, stop in enumerate(stops):
+        route = routes[index] if index < len(routes) and isinstance(routes[index], dict) else {}
+        if index == 0:
+            mandarin_parts.append(f"第一站先去{stop}。从起点过去{_route_leg_text(route)}。{_station_tip(index, len(stops))}")
+            cantonese_parts.append(f"第一站先去{stop}。由起点过去{_route_leg_text(route, cantonese=True)}。{_station_tip(index, len(stops), cantonese=True)}")
+        elif index == len(stops) - 1:
+            previous = stops[index - 1]
+            mandarin_parts.append(f"最后去{stop}。从{previous}过去{_route_leg_text(route)}。{_station_tip(index, len(stops))}")
+            cantonese_parts.append(f"最后去{stop}。由{previous}过去{_route_leg_text(route, cantonese=True)}。{_station_tip(index, len(stops), cantonese=True)}")
+        else:
+            previous = stops[index - 1]
+            mandarin_parts.append(f"第二站去{stop}。从{previous}过去{_route_leg_text(route)}。{_station_tip(index, len(stops))}")
+            cantonese_parts.append(f"第二站去{stop}。由{previous}过去{_route_leg_text(route, cantonese=True)}。{_station_tip(index, len(stops), cantonese=True)}")
+    mandarin_parts.append("路上如果人多、下雨或长者累了，就先休息，不需要赶完整条路线。")
+    cantonese_parts.append("如果路上人多、落雨或者长者攰，就先休息，唔需要赶住行完整条路线。")
     return {
-        "mandarin": mandarin,
-        "cantonese": cantonese,
+        "mandarin": "\n".join(mandarin_parts),
+        "cantonese": "\n".join(cantonese_parts),
         "tts_config": {
             "provider": "mock-edge-tts",
             "voice_zh_cn": "zh-CN-XiaoxiaoNeural",

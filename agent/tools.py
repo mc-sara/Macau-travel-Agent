@@ -377,6 +377,55 @@ except Exception:
 
 ROUTES: Dict[tuple, Dict[str, Any]] = {}
 AMAP_GEOCODE_CACHE: Dict[str, Dict[str, Any]] = {}
+
+
+MACAU_BOUNDS = {"min_lng": 113.42, "max_lng": 113.68, "min_lat": 22.03, "max_lat": 22.25}
+LOCAL_ORIGIN_CANDIDATES: Dict[str, Dict[str, Any]] = {
+    "议事亭前地": {"name": "议事亭前地", "location": "113.5390,22.1936", "formatted_address": "澳门议事亭前地", "source": "local_alias"},
+    "澳门大学": {"name": "澳门大学", "location": "113.5456,22.1291", "formatted_address": "澳门大学", "source": "local_alias"},
+    "澳門大學": {"name": "澳門大學", "location": "113.5456,22.1291", "formatted_address": "澳門大學", "source": "local_alias"},
+    "澳大": {"name": "澳门大学", "location": "113.5456,22.1291", "formatted_address": "澳门大学", "source": "local_alias"},
+    "关闸": {"name": "关闸", "location": "113.5490,22.2139", "formatted_address": "澳门关闸", "source": "local_alias"},
+    "關閘": {"name": "關閘", "location": "113.5490,22.2139", "formatted_address": "澳门关闸", "source": "local_alias"},
+    "澳门旅游塔": {"name": "澳门旅游塔", "location": "113.5366,22.1797", "formatted_address": "澳门旅游塔", "source": "local_alias"},
+    "威尼斯人": {"name": "澳门威尼斯人", "location": "113.5616,22.1489", "formatted_address": "澳门威尼斯人", "source": "local_alias"},
+    "伦敦人": {"name": "澳门伦敦人", "location": "113.5660,22.1453", "formatted_address": "澳门伦敦人", "source": "local_alias"},
+    "巴黎人": {"name": "澳门巴黎人", "location": "113.5629,22.1436", "formatted_address": "澳门巴黎人", "source": "local_alias"},
+    "妈阁": {"name": "妈阁庙", "location": "113.5319,22.1869", "formatted_address": "澳门妈阁庙", "source": "local_alias"},
+    "大三巴": {"name": "大三巴", "location": "113.5408,22.1978", "formatted_address": "澳门大三巴", "source": "local_alias"},
+}
+
+
+def _location_lat_lng(location: str) -> Optional[tuple]:
+    try:
+        lng, lat = [float(item) for item in str(location).split(',', 1)]
+        return lat, lng
+    except (TypeError, ValueError):
+        return None
+
+
+def _is_macau_location(location: str) -> bool:
+    coords = _location_lat_lng(location)
+    if not coords:
+        return False
+    lat, lng = coords
+    return MACAU_BOUNDS["min_lng"] <= lng <= MACAU_BOUNDS["max_lng"] and MACAU_BOUNDS["min_lat"] <= lat <= MACAU_BOUNDS["max_lat"]
+
+
+def _origin_candidate(item: Dict[str, Any], source: str = "amap") -> Optional[Dict[str, Any]]:
+    location = str(item.get("location") or "").strip()
+    coords = _location_lat_lng(location)
+    if not coords or not _is_macau_location(location):
+        return None
+    lat, lng = coords
+    return {
+        "name": item.get("name") or item.get("formatted_address") or "澳门地点",
+        "address": item.get("formatted_address") or item.get("address") or item.get("name") or "",
+        "location": location,
+        "latitude": lat,
+        "longitude": lng,
+        "provider": source,
+    }
 AMAP_ROUTE_CACHE: Dict[tuple, Dict[str, Any]] = {}
 AMAP_LAST_REQUEST_AT = 0.0
 ATTRACTION_LOCATION_INDEX: Dict[str, Dict[str, Any]] = {
@@ -514,6 +563,40 @@ def amap_geocode(place: str) -> Dict[str, Any]:
     AMAP_GEOCODE_CACHE[cache_key] = dict(result)
     return result
 
+
+
+def search_origin_candidates(query: str, limit: int = 6) -> List[Dict[str, Any]]:
+    text = str(query or "").strip()
+    if not text:
+        return []
+    candidates: List[Dict[str, Any]] = []
+    seen = set()
+
+    def add(item: Dict[str, Any], source: str = "amap") -> None:
+        candidate = _origin_candidate(item, source)
+        if not candidate:
+            return
+        key = (round(float(candidate["latitude"]), 5), round(float(candidate["longitude"]), 5), str(candidate["name"]))
+        if key in seen:
+            return
+        seen.add(key)
+        candidates.append(candidate)
+
+    for alias, item in LOCAL_ORIGIN_CANDIDATES.items():
+        if text in alias or alias in text or text in str(item.get("name", "")):
+            add(item, item.get("source", "local_alias"))
+
+    for name, item in ATTRACTION_LOCATION_INDEX.items():
+        if text in name or name in text:
+            add(item, "excel_coordinates")
+
+    try:
+        geo = amap_geocode(text)
+        add(geo, "amap_geocode")
+    except Exception:
+        pass
+
+    return candidates[:limit]
 
 def _amap_direction_path(mode: str) -> str:
     if mode in {"walking", "walk"}:

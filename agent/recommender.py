@@ -218,6 +218,23 @@ def _haversine_km(a: Optional[Tuple[float, float]], b: Optional[Tuple[float, flo
     return radius * 2 * math.atan2(math.sqrt(x), math.sqrt(1 - x))
 
 
+
+def _canonical_poi_key(poi: Dict[str, Any]) -> str:
+    canonical = str(poi.get("canonical_name") or poi.get("name") or "").strip().lower()
+    alias_map = {
+        "澳門仁慈堂大樓": "澳门仁慈堂大楼",
+        "澳门仁慈堂大楼": "澳门仁慈堂大楼",
+        "macau holy house of mercy": "澳门仁慈堂大楼",
+        "holy house of mercy": "澳门仁慈堂大楼",
+    }
+    if canonical in alias_map:
+        return alias_map[canonical]
+    coords = _poi_coords(poi)
+    if coords:
+        lat, lng = coords
+        return f"{canonical}:{round(lat, 4)}:{round(lng, 4)}"
+    return canonical
+
 def _distance_score(distance_km: float) -> float:
     if distance_km <= 0.8:
         return 100
@@ -312,9 +329,9 @@ def _beam_search(goal: Dict[str, Any], candidates: List[Dict[str, Any]]) -> List
     for _ in range(max_points):
         expanded: List[Tuple[List[Dict[str, Any]], List[Dict[str, Any]], float, Optional[Tuple[float, float]]]] = []
         for route_pois, route_segments, raw_score, current_coords in beams:
-            used = {item["name"] for item in route_pois}
+            used = {_canonical_poi_key(item) for item in route_pois}
             for candidate in candidates:
-                if candidate["name"] in used:
+                if _canonical_poi_key(candidate) in used:
                     continue
                 poi = dict(candidate)
                 step_score = _step_score(route_pois, poi, current_coords)
@@ -330,7 +347,7 @@ def _beam_search(goal: Dict[str, Any], candidates: List[Dict[str, Any]]) -> List
     unique: List[Tuple[List[Dict[str, Any]], List[Dict[str, Any]], float]] = []
     seen_keys = set()
     for item in sorted(complete, key=lambda value: value[2], reverse=True):
-        key = tuple(poi["name"] for poi in item[0])
+        key = tuple(_canonical_poi_key(poi) for poi in item[0])
         if key not in seen_keys:
             seen_keys.add(key)
             unique.append(item)
@@ -425,12 +442,59 @@ def _route_summary_text(origin: str, pois: List[Dict[str, Any]], verification: D
     names = " -> ".join([origin] + [poi["name"] for poi in pois])
     return f"{names}；预计约 {verification['total_duration_min']} 分钟，步行约 {verification['total_walking_distance_m']} 米。"
 
+def _map_view(origin_info: Dict[str, Any], pois: List[Dict[str, Any]], routes: List[Dict[str, Any]]) -> Dict[str, Any]:
+    points: List[Dict[str, Any]] = [
+        {
+            "type": "origin",
+            "name": origin_info.get("name", "起点"),
+            "latitude": origin_info.get("latitude"),
+            "longitude": origin_info.get("longitude"),
+            "label": "起点",
+        }
+    ]
+    for index, poi in enumerate(pois, start=1):
+        points.append({
+            "type": "poi",
+            "index": index,
+            "name": poi.get("name"),
+            "latitude": poi.get("latitude"),
+            "longitude": poi.get("longitude"),
+            "region": poi.get("region"),
+            "route_cluster": poi.get("route_cluster"),
+            "label": str(index),
+        })
+    fallback_polyline = [
+        [point["latitude"], point["longitude"]]
+        for point in points
+        if point.get("latitude") is not None and point.get("longitude") is not None
+    ]
+    return {
+        "provider": "leaflet_osm",
+        "center": [22.17, 113.55],
+        "bounds": [[22.06, 113.48], [22.23, 113.64]],
+        "points": points,
+        "polyline": fallback_polyline,
+        "route_segments": [
+            {
+                "from_name": route.get("from_name"),
+                "to_name": route.get("to_name"),
+                "duration_min": route.get("duration_min"),
+                "walking_distance_m": route.get("walking_distance_m"),
+                "map_provider": route.get("map_provider"),
+            }
+            for route in routes
+        ],
+        "is_fallback_polyline": True,
+    }
+
+
 
 def _plan_from_route(goal: Dict[str, Any], route_item: Tuple[List[Dict[str, Any]], List[Dict[str, Any]], float], index: int) -> Dict[str, Any]:
     scenario = "senior"
     pois, _routes, _raw_score = route_item
     people_count = goal.get("people", {}).get("total", 2)
     origin = _origin_text(goal)
+    origin_info = _resolve_origin(goal)
     timeline = _timeline([item["name"] for item in pois])
     routes = _verified_routes(origin, pois)
     verification = _route_verification(routes)
@@ -456,6 +520,7 @@ def _plan_from_route(goal: Dict[str, Any], route_item: Tuple[List[Dict[str, Any]
         "total_duration_min": verification["total_duration_min"],
         "total_walking_distance_m": verification["total_walking_distance_m"],
         "route_summary": _route_summary_text(origin, pois, verification),
+        "map_view": _map_view(origin_info, pois, routes),
         "station_explanations": station_explanations,
         "availability": [check_availability(poi["id"], timeline[pos]["time"], people_count) for pos, poi in enumerate(pois)],
         "tags": tags,

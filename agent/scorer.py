@@ -252,20 +252,21 @@ def score_plan(plan: Dict[str, Any], goal: Dict[str, Any]) -> Dict[str, Any]:
             "executable": 0.10,
         }
 
-    reasons = [
-        "方案优先控制步行距离和转场时间，适合长者低疲劳出行。",
-        "路线避开明显台阶和长队风险，并保留休息节奏。",
-        "餐饮安排偏清淡，可备注少油少盐或少糖少冰。",
-        "订位、点单和路线卡可由 QwenPaw 模拟执行，便于家属确认。",
+    timeline = plan.get("timeline", [])
+    reasons = ["本路线步行较少，三站之间距离短，适合长者慢慢走。"]
+    simple_station_reasons = [
+        "第一站节奏轻，适合先慢慢逛。",
+        "室内安静，有座椅，适合中途休息。",
+        "停留时间短，适合作为最后一站。",
     ]
-    for detail in plan.get("poi_details", [])[:2]:
-        poi_reasons = detail.get("poi_score", {}).get("reasons", [])
-        if poi_reasons:
-            reasons.append(f"{detail.get('name')}：{poi_reasons[0]}。")
+    for index, step in enumerate(timeline[:3]):
+        name = step.get("name", f"第 {index + 1} 站")
+        reason = simple_station_reasons[index] if index < len(simple_station_reasons) else "停留时间短，适合长者慢慢参观。"
+        reasons.append(f"{name}：{reason}")
 
     risks = [
-        "热门区域可能人流较多，建议现场优先选择有座椅的位置短暂停留。",
-        "如长者当天体力不足，应切换到备选轻量路线或减少一个停留点。",
+        "建议每到一站先休息一下。",
+        "如果当天人多或长者累了，可以少去一站。",
     ]
     for route in routes:
         if route.get("duration_min", 0) > 20:

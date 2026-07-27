@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from agent.parser import parse_goal
 from agent.recommender import recommend_itineraries
@@ -95,9 +95,23 @@ def _tool_steps(goal: Dict[str, Any], best_plan: Dict[str, Any]) -> List[Dict[st
     ]
 
 
-def plan_day(user_text: str, use_llm: bool = False, llm_mode: str = "mock") -> Dict[str, Any]:
+def plan_day(user_text: str, use_llm: bool = False, llm_mode: str = "mock", origin_text: str = "", origin_coords: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     goal = parse_goal(user_text, use_llm=use_llm, llm_mode=llm_mode)
     goal["scenario"] = "senior"
+    origin_text = str(origin_text or "").strip()
+    if origin_text:
+        goal["origin"] = origin_text
+        structured = goal.setdefault("structured_goal", {})
+        location = structured.setdefault("location", {})
+        if isinstance(location, dict):
+            location["start_location"] = origin_text
+    if origin_coords and origin_coords.get("latitude") is not None and origin_coords.get("longitude") is not None:
+        goal["origin_coords"] = {
+            "latitude": float(origin_coords["latitude"]),
+            "longitude": float(origin_coords["longitude"]),
+        }
+        if origin_coords.get("location"):
+            goal["origin_coords"]["location"] = origin_coords["location"]
     candidates = generate_candidate_plans(goal)
     candidates = sorted(candidates, key=lambda item: item["score"]["score"], reverse=True)
     best_plan = candidates[0]
