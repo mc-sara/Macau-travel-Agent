@@ -1,0 +1,120 @@
+{
+  "manifest_schema_version": "2.0.0",
+  "release_version": "restaurant-static-v1.0.0",
+  "status": "frozen",
+  "collected_on": "2026-07-29",
+  "frozen_on": "2026-07-30",
+  "generated_at": "2026-07-30T01:35:20+08:00",
+  "verified_at": "2026-07-30T02:50:00+08:00",
+  "coordinate_system": "GCJ-02",
+  "deduplication_key": "restaurants.amap_poi_id",
+  "main_agent_attraction_join": "attraction_restaurants.attraction_id = data/excel/macau_attractions_master.xlsx.id",
+  "artifacts": {
+    "excel": {
+      "file": "澳门餐厅数据_v1.0.0.xlsx",
+      "purpose": "primary_human_review_and_github_share",
+      "bytes": 1094301,
+      "sha256": "4b067214ac913e71e592cf7d139462ab124d75f8174d902d568fbc0620aa6551"
+    },
+    "sqlite": {
+      "file": "restaurant_recommendation_v1.0.0.db",
+      "purpose": "normalized_machine_interface",
+      "bytes": 8626176,
+      "sha256": "b8cb5e3422774c771393b584950be17c7ecd1ce08ea2dc80b6bd9d4ab7d8fc80"
+    }
+  },
+  "database_integrity": "ok",
+  "duplicate_amap_poi_ids": 0,
+  "schema_versions": [
+    "001_v1_1",
+    "002_restaurant_review_flags"
+  ],
+  "feature_versions": [
+    "discrete-taste-v1.0"
+  ],
+  "counts": {
+    "attractions": 90,
+    "attractions_with_relations": 89,
+    "restaurants": 489,
+    "attraction_restaurants": 6798,
+    "category_mapping": 31,
+    "restaurant_contacts": 361,
+    "restaurant_static_features": 3074,
+    "restaurant_feature_evidence": 9942,
+    "restaurant_review_flags": 115,
+    "restaurant_change_log": 370
+  },
+  "successful_zero_result_attractions": [
+    {
+      "attraction_id": "305",
+      "attraction_name": "九澳七苦圣母小堂",
+      "keyword": "餐厅",
+      "radius_m": 1500,
+      "result_count": 0
+    }
+  ],
+  "feature_evidence_breakdown": {
+    "amap_type_raw": 6868,
+    "category_prior": 396,
+    "menu_inferred": 446,
+    "manual_verified": 2232
+  },
+  "interfaces": {
+    "data_dictionary": "DATA_DICTIONARY.md",
+    "schema": "../主要脚本/restaurant_pipeline/database/schema_proposed.sql",
+    "python_bridge": "../主要脚本/integration/restaurant_data.py",
+    "main_agent_integration": "../主要脚本/MAIN_AGENT_INTEGRATION.md",
+    "dynamic_status": "../开发原则和计划/DYNAMIC_DATA_STATUS_AND_FUTURE.md"
+  },
+  "excel_omissions": {
+    "attractions": "already_present_in_main_agent_data",
+    "collection_runs_and_logs": "runtime_audit_not_business_share",
+    "dynamic_provider_cache": "expiring_dynamic_cache_not_static_fact",
+    "empty_reserved_tables": "schema_preserved_in_sqlite_and_data_dictionary",
+    "local_audit_paths": "removed_from_excel_share_view_for_portability"
+  },
+  "excluded_as_redundant": [
+    "main Agent attraction workbook copy",
+    "raw provider responses",
+    "runtime logs and caches",
+    "database backups and intermediate databases",
+    "duplicate CSV exports",
+    "preview images",
+    "mock merchant data",
+    "local absolute paths from Excel and shared text data views",
+    "API keys"
+  ],
+  "sqlite_audit_references": {
+    "policy": "retained_to_keep_frozen_database_identical_and_traceable",
+    "fields": [
+      "attraction_restaurants.raw_file",
+      "collection_log.raw_file",
+      "restaurant_feature_evidence.raw_file",
+      "restaurant_review_flags.source_reference",
+      "restaurant_change_log.source_raw_file"
+    ],
+    "note": "These are audit references inside SQLite, not copied raw or temporary files."
+  },
+  "validation": {
+    "reference_thread": "019fadcd-fe37-7430-b843-98851295b29c",
+    "source_and_delivery_sqlite_sha256_equal": true,
+    "sqlite_integrity": "ok",
+    "foreign_key_violations": 0,
+    "raw_attraction_directories": 90,
+    "raw_json_files": 394,
+    "relations_missing_raw_file": 0,
+    "relations_poi_missing_in_raw_json": 0,
+    "excel_sqlite_business_counts_equal": true,
+    "tag_interface_call": "passed",
+    "nonempty_duplicate_file_hashes": 0,
+    "complete_api_keys_found": 0
+  },
+  "dynamic_status": {
+    "route": "explicit_call_only",
+    "crowd": "unavailable",
+    "queue": "unavailable",
+    "live_open_status": "unavailable"
+  },
+  "phase3": "paused_contracts_only",
+  "upgrade_policy": "publish_new_immutable_version_and_reconcile_excel_sqlite"
+}
